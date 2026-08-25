@@ -1,0 +1,64 @@
+{
+  "name": "@chronova/antigravity-plugin",
+  "version": "1.0.0",
+  "description": "Chronova heartbeat tracking plugin for Antigravity — sends coding activity to your Chronova dashboard via chronova-cli",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "plugin.json",
+    "hooks.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "private": false,
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "semantic-release": "semantic-release"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "chronova",
+    "antigravity",
+    "gemini",
+    "wakatime",
+    "heartbeat",
+    "coding-analytics",
+    "developer-analytics",
+    "ai-coding"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin.git"
+  },
+  "homepage": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin/issues"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^11.0.0",
+    "@semantic-release/github": "^12.0.0",
+    "@semantic-release/npm": "^13.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "@types/node": "^25.8.0",
+    "eslint": "^10.0.0",
+    "semantic-release": "^25.0.0",
+    "typescript": "^6.0.0",
+    "typescript-eslint": "^8.61.1",
+    "vitest": "^4.1.6"
+  }
+}

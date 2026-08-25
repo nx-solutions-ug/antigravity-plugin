@@ -1,0 +1,54 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as os from "node:os";
+
+const LOG_DIR = path.join(os.homedir(), ".chronova-antigravity-plugin");
+const LOG_FILE = path.join(LOG_DIR, "plugin.log");
+
+type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+
+let debugEnabled: boolean | undefined;
+
+function isDebugEnabled(): boolean {
+  if (debugEnabled !== undefined) return debugEnabled;
+  if (
+    process.env.CHRONOVA_ANTIGRAVITY_DEBUG === "1" ||
+    process.env.CHRONOVA_PI_DEBUG === "1" ||
+    process.env.CHRONOVA_DEBUG === "1"
+  ) {
+    debugEnabled = true;
+    return true;
+  }
+  try {
+    const cfgPath = path.join(os.homedir(), ".chronova.cfg");
+    const content = fs.readFileSync(cfgPath, "utf-8");
+    debugEnabled = /debug\s*=\s*true/i.test(content);
+  } catch {
+    debugEnabled = false;
+  }
+  return debugEnabled;
+}
+
+function write(level: LogLevel, msg: string, data?: unknown): void {
+  if (level === "DEBUG" && !isDebugEnabled()) return;
+
+  try {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+    const ts = new Date().toISOString();
+    const line = data !== undefined
+      ? `[${ts}] [${level}] ${msg} ${JSON.stringify(data)}\n`
+      : `[${ts}] [${level}] ${msg}\n`;
+    fs.appendFileSync(LOG_FILE, line);
+  } catch {
+    // Swallow log write failures — never crash the plugin
+  }
+}
+
+export const logger = {
+  debug(msg: string, data?: unknown): void { write("DEBUG", msg, data); },
+  info(msg: string, data?: unknown): void { write("INFO", msg, data); },
+  warn(msg: string, data?: unknown): void { write("WARN", msg, data); },
+  error(msg: string, data?: unknown): void { write("ERROR", msg, data); },
+  // Helper for testing to reset debug cache
+  _resetDebugCache(): void { debugEnabled = undefined; },
+} as const;

@@ -1,0 +1,24 @@
+{
+  "chronova-heartbeat": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node dist/index.js --hook PreToolUse",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node dist/index.js --hook Stop",
+        "timeout": 15
+      }
+    ]
+  }
+}
