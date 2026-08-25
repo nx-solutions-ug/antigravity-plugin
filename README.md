@@ -1,6 +1,6 @@
 [![npm version](https://img.shields.io/npm/v/@chronova/antigravity-plugin.svg)](https://www.npmjs.com/package/@chronova/antigravity-plugin)
-[![Tests](https://github.com/nx-solutions-ug/chronova-antigravity-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/nx-solutions-ug/chronova-antigravity-plugin/actions/workflows/test.yml)
-[![Release](https://github.com/nx-solutions-ug/chronova-antigravity-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/nx-solutions-ug/chronova-antigravity-plugin/actions/workflows/release.yml)
+[![Tests](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/test.yml)
+[![Release](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 # chronova-antigravity-plugin

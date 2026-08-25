@@ -45,11 +45,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nx-solutions-ug/chronova-antigravity-plugin.git"
+    "url": "git+https://github.com/nx-solutions-ug/antigravity-plugin.git"
   },
-  "homepage": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin#readme",
+  "homepage": "https://github.com/nx-solutions-ug/antigravity-plugin#readme",
   "bugs": {
-    "url": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin/issues"
+    "url": "https://github.com/nx-solutions-ug/antigravity-plugin/issues"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

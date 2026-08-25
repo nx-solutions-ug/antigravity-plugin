@@ -35,7 +35,7 @@
     [
       "@semantic-release/github",
       {
-        "releaseBodyTemplate": "<%= nextRelease.notes.length > 120000 ? nextRelease.notes.substring(0, 120000) + '\\n\\n---\\n\\n**Note:** Release notes truncated. See [CHANGELOG.md](https://github.com/nx-solutions-ug/chronova-antigravity-plugin/blob/main/CHANGELOG.md) for the full changelog.' : nextRelease.notes %>"
+        "releaseBodyTemplate": "<%= nextRelease.notes.length > 120000 ? nextRelease.notes.substring(0, 120000) + '\\n\\n---\\n\\n**Note:** Release notes truncated. See [CHANGELOG.md](https://github.com/nx-solutions-ug/antigravity-plugin/blob/main/CHANGELOG.md) for the full changelog.' : nextRelease.notes %>"
       }
     ]
   ],
