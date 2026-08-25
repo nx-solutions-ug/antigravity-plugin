@@ -37,7 +37,7 @@ Link the globally installed plugin into your global Antigravity configuration di
 
 ```bash
 mkdir -p ~/.gemini/config/plugins
-ln -sfn "$(bun pm bin -g)/../lib/node_modules/@chronova/antigravity-plugin" ~/.gemini/config/plugins/chronova-antigravity-plugin
+ln -sfn ~/.bun/install/global/node_modules/@chronova/antigravity-plugin ~/.gemini/config/plugins/chronova-antigravity-plugin
 ```
 
 Or install directly into your global Antigravity plugins directory:
