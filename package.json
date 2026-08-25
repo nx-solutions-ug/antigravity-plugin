@@ -14,14 +14,19 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "packageManager": "bun@1.3.14",
+  "author": "nx-solutions-ug",
   "private": false,
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prebuild": "bun run clean",
+    "prepublishOnly": "bun run build",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pack": "bun pm pack",
     "semantic-release": "semantic-release"
   },
   "publishConfig": {
@@ -40,7 +45,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin.git"
+    "url": "git+https://github.com/nx-solutions-ug/chronova-antigravity-plugin.git"
   },
   "homepage": "https://github.com/nx-solutions-ug/chronova-antigravity-plugin#readme",
   "bugs": {

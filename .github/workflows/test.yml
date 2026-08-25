@@ -11,63 +11,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  type-check:
-    name: Type Check
+  test:
+    name: Test & Build
     runs-on: [ubuntu-latest]
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "25"
-          cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Run TypeScript type check
-        run: npm run type-check
-
-  lint:
-    name: Lint
-    runs-on: [ubuntu-latest]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "25"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
+        run: bun run type-check
 
       - name: Run ESLint
-        run: npm run lint
-
-  test:
-    name: Test
-    runs-on: [ubuntu-latest]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "25"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
+        run: bun run lint
 
       - name: Run Vitest Unit Tests
-        run: npm test
+        run: bun run test
+
+      - name: Build
+        run: bun run build
