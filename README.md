@@ -109,19 +109,22 @@ chronova-cli \
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Run unit tests
-npm test
+bun test
 
 # Type check
-npm run type-check
+bun run type-check
 
 # Lint code
-npm run lint
+bun run lint
 
 # Build production bundle
-npm run build
+bun run build
+
+# Pack npm tarball
+bun run pack
 ```
 
 ## License
