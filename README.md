@@ -25,13 +25,39 @@ Automatically sends coding activity heartbeats to your [Chronova](https://chrono
 
 ## Installation
 
-### Project Workspace (Recommended for Repositories)
+### Recommended: Global Installation via Bun (User-wide)
 
-Place the plugin in your project's `.agents/plugins/` directory:
+Install the package globally using Bun:
+
+```bash
+bun add -g @chronova/antigravity-plugin
+```
+
+Link the globally installed plugin into your global Antigravity configuration directory:
+
+```bash
+mkdir -p ~/.gemini/config/plugins
+ln -sfn "$(bun pm bin -g)/../lib/node_modules/@chronova/antigravity-plugin" ~/.gemini/config/plugins/chronova-antigravity-plugin
+```
+
+Or install directly into your global Antigravity plugins directory:
+
+```bash
+mkdir -p ~/.gemini/config/plugins/chronova-antigravity-plugin
+cd ~/.gemini/config/plugins/chronova-antigravity-plugin
+bun add @chronova/antigravity-plugin
+```
+
+Antigravity automatically discovers and activates all plugins located in `~/.gemini/config/plugins/`.
+
+### Project Workspace Installation
+
+To install for a specific project/repository:
 
 ```bash
 mkdir -p .agents/plugins/chronova-antigravity-plugin
-# Clone or copy the plugin into .agents/plugins/chronova-antigravity-plugin
+cd .agents/plugins/chronova-antigravity-plugin
+bun add @chronova/antigravity-plugin
 ```
 
 Or declare it in your `.agents/plugins.json`:
@@ -39,21 +65,10 @@ Or declare it in your `.agents/plugins.json`:
 ```json
 {
   "entries": [
-    { "path": "path/to/chronova-antigravity-plugin" }
+    { "path": "node_modules/@chronova/antigravity-plugin" }
   ]
 }
 ```
-
-### Global Installation (User-wide)
-
-Install the plugin into your global Antigravity configuration:
-
-```bash
-mkdir -p ~/.gemini/config/plugins/chronova-antigravity-plugin
-# Clone or link into ~/.gemini/config/plugins/chronova-antigravity-plugin
-```
-
-Antigravity automatically discovers and activates plugins in `~/.gemini/config/plugins/`.
 
 ## Configuration
 
