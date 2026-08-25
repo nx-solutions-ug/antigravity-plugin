@@ -62,7 +62,7 @@
     "@types/node": "^25.8.0",
     "eslint": "^10.0.0",
     "semantic-release": "^25.0.0",
-    "typescript": "^6.0.0",
+    "typescript": "^7.0.0",
     "typescript-eslint": "^8.61.1",
     "vitest": "^4.1.6"
   }
