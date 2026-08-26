@@ -47,12 +47,14 @@ export function handlePreToolUse(inputRaw: string): string {
   try {
     if (inputRaw.trim()) {
       const payload = JSON.parse(inputRaw) as PreToolUsePayload;
-      const projectFolder = extractProjectFolder(payload);
+      const workspacePaths = payload.workspacePaths || [];
+      const defaultProjectFolder = extractProjectFolder(payload);
       const toolCall = extractToolCall(payload);
 
       if (toolCall) {
-        const parsed = parseToolCall(toolCall, projectFolder);
+        const parsed = parseToolCall(toolCall, defaultProjectFolder, workspacePaths);
         if (parsed) {
+          const projectFolder = parsed.projectFolder || defaultProjectFolder;
           logger.debug("Captured file activity in PreToolUse", {
             projectFolder,
             entity: parsed.entity,

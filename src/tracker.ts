@@ -118,9 +118,57 @@ export function extractToolCall(payload: PreToolUsePayload): ToolCall | null {
 }
 
 /**
- * Extract the file entity and whether it was a write operation from a ToolCall.
+ * Patterns of internal agent data, logs, schemas, system paths, and temporary files
+ * that should never be tracked as project files in Chronova.
  */
-export function parseToolCall(toolCall: ToolCall, projectFolder: string): { entity: string; isWrite: boolean } | null {
+export const IGNORED_PATH_PATTERNS: RegExp[] = [
+  /[/\\]\.gemini(?:[/\\]|$)/i,
+  /[/\\]\.system_generated(?:[/\\]|$)/i,
+  /[/\\]\.chronova(?:-antigravity-plugin)?(?:[/\\]|$)/i,
+  /[/\\]\.cache(?:[/\\]|$)/i,
+  /[/\\]\.omp(?:[/\\]|$)/i,
+  /[/\\]node_modules(?:[/\\]|$)/i,
+  /[/\\]\.git(?:[/\\]|$)/i,
+  /^(?:\/tmp|\/var\/tmp|\/dev\/shm|\/proc|\/sys|\/dev)(?:[/\\]|$)/i,
+  /[/\\]brain[/\\][0-9a-fA-F-]+(?:[/\\]|$)/i,
+  /[/\\]mcp[/\\][a-zA-Z0-9_-]+(?:[/\\]|$)/i,
+];
+
+/**
+ * Check if a file path is an internal system/agent path that should not be tracked.
+ */
+export function isIgnoredPath(filePath: string): boolean {
+  const norm = path.normalize(filePath);
+  return IGNORED_PATH_PATTERNS.some((pattern) => pattern.test(norm));
+}
+
+/**
+ * Match a file path to its containing workspace directory.
+ */
+export function findMatchingWorkspace(filePath: string, workspacePaths?: string[]): string | null {
+  if (!workspacePaths || workspacePaths.length === 0) {
+    return null;
+  }
+  const normFile = path.normalize(filePath);
+  for (const ws of workspacePaths) {
+    if (!ws) continue;
+    const normWs = path.normalize(expandTilde(ws));
+    if (normFile === normWs || normFile.startsWith(normWs + path.sep)) {
+      return normWs;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract the file entity, write flag, and associated projectFolder from a ToolCall.
+ * Returns null if the path is invalid, ignored, or outside the active workspace.
+ */
+export function parseToolCall(
+  toolCall: ToolCall,
+  projectFolder: string,
+  workspacePaths?: string[],
+): { entity: string; isWrite: boolean; projectFolder: string } | null {
   const toolName = toolCall.name.toLowerCase();
   const args = toolCall.args ?? {};
 
@@ -172,5 +220,22 @@ export function parseToolCall(toolCall: ToolCall, projectFolder: string): { enti
     return null;
   }
 
-  return { entity: resolved, isWrite };
+  // Reject internal system/agent paths (brain, mcp schemas, skills, logs, tmp, .git, node_modules)
+  if (isIgnoredPath(resolved)) {
+    logger.debug("Ignoring internal/system path", { path: resolved });
+    return null;
+  }
+
+  // If workspacePaths are provided, verify the file belongs to an active workspace
+  let targetProjectFolder = projectFolder;
+  if (workspacePaths && workspacePaths.length > 0) {
+    const matchedWs = findMatchingWorkspace(resolved, workspacePaths);
+    if (!matchedWs) {
+      logger.debug("Skipping file outside workspace paths", { path: resolved, workspacePaths });
+      return null;
+    }
+    targetProjectFolder = matchedWs;
+  }
+
+  return { entity: resolved, isWrite, projectFolder: targetProjectFolder };
 }

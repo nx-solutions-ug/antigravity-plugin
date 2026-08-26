@@ -8,6 +8,8 @@ import {
   extractProjectFolder,
   extractToolCall,
   parseToolCall,
+  isIgnoredPath,
+  findMatchingWorkspace,
 } from "../src/tracker.js";
 
 describe("tracker", () => {
@@ -144,34 +146,115 @@ describe("tracker", () => {
     });
   });
 
+  describe("isIgnoredPath", () => {
+    it("should ignore internal gemini brain step outputs and transcripts", () => {
+      expect(
+        isIgnoredPath(
+          "/home/dev/.gemini/antigravity/brain/c1faf807-0de7-4959-b53d-fb12ee075cd7/.system_generated/steps/644/output.txt",
+        ),
+      ).toBe(true);
+    });
+
+    it("should ignore internal gemini MCP tool schemas and instructions", () => {
+      expect(
+        isIgnoredPath("/home/dev/.gemini/antigravity/mcp/coolify/deploy.json"),
+      ).toBe(true);
+      expect(
+        isIgnoredPath("/home/dev/.gemini/antigravity/mcp/browseros/tabs.json"),
+      ).toBe(true);
+    });
+
+    it("should ignore internal skills and config directories", () => {
+      expect(
+        isIgnoredPath("/home/dev/.gemini/config/skills/find-skills/SKILL.md"),
+      ).toBe(true);
+      expect(
+        isIgnoredPath("/home/dev/.gemini/config/config.json"),
+      ).toBe(true);
+    });
+
+    it("should ignore node_modules, .git, and temp paths", () => {
+      expect(
+        isIgnoredPath("/home/dev/my-project/node_modules/lodash/index.js"),
+      ).toBe(true);
+      expect(isIgnoredPath("/home/dev/my-project/.git/HEAD")).toBe(true);
+      expect(isIgnoredPath("/tmp/scratch.py")).toBe(true);
+      expect(isIgnoredPath("/var/tmp/temp.txt")).toBe(true);
+    });
+
+    it("should NOT ignore legitimate project source files", () => {
+      expect(
+        isIgnoredPath(
+          "/home/dev/.projects/chronova-antigravity-plugin/src/types.ts",
+        ),
+      ).toBe(false);
+      expect(
+        isIgnoredPath("/home/dev/projects/my-app/src/components/Button.tsx"),
+      ).toBe(false);
+    });
+  });
+
+  describe("findMatchingWorkspace", () => {
+    const workspaces = [
+      "/home/dev/.projects/project-a",
+      "/home/dev/.projects/project-b",
+    ];
+
+    it("should match file to its workspace", () => {
+      expect(
+        findMatchingWorkspace(
+          "/home/dev/.projects/project-a/src/index.ts",
+          workspaces,
+        ),
+      ).toBe("/home/dev/.projects/project-a");
+      expect(
+        findMatchingWorkspace(
+          "/home/dev/.projects/project-b/README.md",
+          workspaces,
+        ),
+      ).toBe("/home/dev/.projects/project-b");
+    });
+
+    it("should return null for files outside all workspaces", () => {
+      expect(
+        findMatchingWorkspace("/home/dev/.projects/other-project/src/index.ts", workspaces),
+      ).toBeNull();
+    });
+  });
+
   describe("parseToolCall", () => {
     const base = "/home/dev/my-project";
+    const workspacePaths = ["/home/dev/my-project"];
 
-    it("should parse view_file as read", () => {
+    it("should parse view_file as read for valid workspace files", () => {
       const result = parseToolCall(
         {
           name: "view_file",
           args: { AbsolutePath: "/home/dev/my-project/src/index.ts" },
         },
         base,
+        workspacePaths,
       );
       expect(result).toEqual({
         entity: "/home/dev/my-project/src/index.ts",
         isWrite: false,
+        projectFolder: "/home/dev/my-project",
       });
     });
 
-    it("should parse write_to_file as write", () => {
+    it("should parse write_to_file as write for valid workspace files", () => {
       const result = parseToolCall(
         {
           name: "write_to_file",
           args: { TargetFile: "/home/dev/my-project/src/index.ts", CodeContent: "test" },
         },
         base,
+        workspacePaths,
       );
       expect(result).toEqual({
         entity: "/home/dev/my-project/src/index.ts",
         isWrite: true,
+        projectFolder: "/home/dev/my-project",
       });
     });
 
@@ -182,14 +265,60 @@ describe("tracker", () => {
           args: { TargetFile: "src/state.ts" },
         },
         base,
+        workspacePaths,
       );
       expect(result).toEqual({
         entity: "/home/dev/my-project/src/state.ts",
         isWrite: true,
+        projectFolder: "/home/dev/my-project",
       });
     });
 
-    it("should parse call_mcp_tool with filesystem tools", () => {
+    it("should filter out internal gemini brain output.txt", () => {
+      const result = parseToolCall(
+        {
+          name: "view_file",
+          args: {
+            AbsolutePath:
+              "/home/dev/.gemini/antigravity/brain/c1faf807-0de7-4959-b53d-fb12ee075cd7/.system_generated/steps/644/output.txt",
+          },
+        },
+        base,
+        workspacePaths,
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should filter out internal gemini MCP tool schemas", () => {
+      const result = parseToolCall(
+        {
+          name: "view_file",
+          args: {
+            AbsolutePath:
+              "/home/dev/.gemini/antigravity/mcp/coolify/deploy.json",
+          },
+        },
+        base,
+        workspacePaths,
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should filter out files outside workspacePaths", () => {
+      const result = parseToolCall(
+        {
+          name: "view_file",
+          args: {
+            AbsolutePath: "/home/dev/.projects/unrelated-project/src/foo.ts",
+          },
+        },
+        base,
+        workspacePaths,
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should parse call_mcp_tool with filesystem tools inside workspace", () => {
       const writeResult = parseToolCall(
         {
           name: "call_mcp_tool",
@@ -200,10 +329,12 @@ describe("tracker", () => {
           },
         },
         base,
+        workspacePaths,
       );
       expect(writeResult).toEqual({
         entity: "/home/dev/my-project/package.json",
         isWrite: true,
+        projectFolder: "/home/dev/my-project",
       });
 
       const readResult = parseToolCall(
@@ -216,10 +347,12 @@ describe("tracker", () => {
           },
         },
         base,
+        workspacePaths,
       );
       expect(readResult).toEqual({
         entity: "/home/dev/my-project/package.json",
         isWrite: false,
+        projectFolder: "/home/dev/my-project",
       });
     });
 
@@ -230,6 +363,7 @@ describe("tracker", () => {
           args: { question: "What is your name?" },
         },
         base,
+        workspacePaths,
       );
       expect(result).toBeNull();
     });
