@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/banner.png" alt="chronova-antigravity-plugin — AI Activity & Telemetry Extension for Google Antigravity" width="850" />
+</p>
+
 [![npm version](https://img.shields.io/npm/v/@chronova/antigravity-plugin.svg)](https://www.npmjs.com/package/@chronova/antigravity-plugin)
 [![Tests](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/test.yml)
 [![Release](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/nx-solutions-ug/antigravity-plugin/actions/workflows/release.yml)
