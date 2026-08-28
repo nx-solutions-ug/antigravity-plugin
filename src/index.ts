@@ -8,8 +8,10 @@ import { queuePendingChange, shouldSendHeartbeat } from "./state.js";
 import { flushPendingHeartbeats } from "./heartbeat.js";
 import type { PreToolUsePayload, StopPayload } from "./types.js";
 
+export const MAX_STDIN_BYTES = 10 * 1024 * 1024; // 10 MB limit
+
 /**
- * Read all data from standard input.
+ * Read data from standard input up to MAX_STDIN_BYTES limit.
  */
 export async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
@@ -17,10 +19,52 @@ export async function readStdin(): Promise<string> {
   }
 
   const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
   return new Promise((resolve) => {
-    process.stdin.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-    process.stdin.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-    process.stdin.on("error", () => resolve(""));
+    let resolved = false;
+
+    const cleanup = () => {
+      process.stdin.removeListener("data", onData);
+      process.stdin.removeListener("end", onEnd);
+      process.stdin.removeListener("error", onError);
+    };
+
+    const safeResolve = (val: string) => {
+      if (!resolved) {
+        resolved = true;
+        cleanup();
+        resolve(val);
+      }
+    };
+
+    const onData = (chunk: Buffer | string) => {
+      const buf = Buffer.from(chunk);
+      totalBytes += buf.length;
+      if (totalBytes > MAX_STDIN_BYTES) {
+        logger.warn("Stdin input exceeded size limit", {
+          totalBytes,
+          limit: MAX_STDIN_BYTES,
+        });
+        process.stdin.pause();
+        safeResolve("");
+        return;
+      }
+      chunks.push(buf);
+    };
+
+    const onEnd = () => {
+      safeResolve(Buffer.concat(chunks).toString("utf8"));
+    };
+
+    const onError = (err: unknown) => {
+      logger.error("Error reading stdin", { error: String(err) });
+      safeResolve("");
+    };
+
+    process.stdin.on("data", onData);
+    process.stdin.on("end", onEnd);
+    process.stdin.on("error", onError);
   });
 }
 
