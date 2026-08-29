@@ -6,9 +6,8 @@ import {
 } from "./tracker.js";
 import { queuePendingChange, shouldSendHeartbeat } from "./state.js";
 import { flushPendingHeartbeats } from "./heartbeat.js";
+import { MAX_STDIN_BYTES } from "./constants.js";
 import type { PreToolUsePayload, StopPayload } from "./types.js";
-
-export const MAX_STDIN_BYTES = 10 * 1024 * 1024; // 10 MB limit
 
 /**
  * Read data from standard input up to MAX_STDIN_BYTES limit.
@@ -46,15 +45,21 @@ export async function readStdin(): Promise<string> {
           totalBytes,
           limit: MAX_STDIN_BYTES,
         });
-        process.stdin.pause();
-        safeResolve("");
+        // Remove listeners first so destroy() doesn't fire the error handler.
+        cleanup();
+        resolved = true;
+        // Destroy the pipe so the parent writer unblocks instead of hanging
+        // on a full OS pipe buffer (fail-soft: never block the host IDE).
+        process.stdin.destroy();
+        resolve("");
         return;
       }
       chunks.push(buf);
     };
 
     const onEnd = () => {
-      safeResolve(Buffer.concat(chunks).toString("utf8"));
+      cleanup();
+      resolve(Buffer.concat(chunks).toString("utf8"));
     };
 
     const onError = (err: unknown) => {

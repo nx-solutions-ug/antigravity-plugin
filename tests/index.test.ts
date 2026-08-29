@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { handlePreToolUse, handleStop, handlePostToolUse, readStdin, MAX_STDIN_BYTES } from "../src/index.js";
+import { handlePreToolUse, handleStop, handlePostToolUse, readStdin } from "../src/index.js";
+import { MAX_STDIN_BYTES } from "../src/constants.js";
 import { Readable } from "node:stream";
 import { getPendingHeartbeats } from "../src/state.js";
 
@@ -150,6 +151,32 @@ describe("hook handler", () => {
       // Push chunk larger than MAX_STDIN_BYTES
       const largeChunk = Buffer.alloc(MAX_STDIN_BYTES + 100);
       mockStdin.push(largeChunk);
+
+      const result = await promise;
+      expect(result).toBe("");
+    });
+
+    it("should reject and return empty string when cumulative small chunks exceed MAX_STDIN_BYTES", async () => {
+      const mockStdin = new Readable({
+        read() {},
+      }) as unknown as typeof process.stdin;
+      mockStdin.isTTY = false;
+
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const promise = readStdin();
+      // Push many small chunks, each well under the limit, whose cumulative
+      // size crosses the threshold — locks in the running-counter contract.
+      const chunkSize = 1024 * 1024; // 1 MB per chunk
+      const chunk = Buffer.alloc(chunkSize, "a");
+      for (let pushed = 0; pushed <= MAX_STDIN_BYTES; pushed += chunkSize) {
+        mockStdin.push(chunk);
+      }
+      // Push one more small chunk to push the cumulative total over the limit
+      mockStdin.push(Buffer.from("overflow"));
 
       const result = await promise;
       expect(result).toBe("");
