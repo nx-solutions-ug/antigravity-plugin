@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { handlePreToolUse, handleStop, handlePostToolUse } from "../src/index.js";
+import { handlePreToolUse, handleStop, handlePostToolUse, readStdin } from "../src/index.js";
+import { MAX_STDIN_BYTES } from "../src/constants.js";
+import { Readable } from "node:stream";
 import { getPendingHeartbeats } from "../src/state.js";
 
 describe("hook handler", () => {
@@ -86,6 +88,116 @@ describe("hook handler", () => {
 
       const response = handlePostToolUse(payload);
       expect(JSON.parse(response)).toEqual({});
+    });
+  });
+  describe("readStdin", () => {
+    let originalStdin: typeof process.stdin;
+
+    beforeEach(() => {
+      originalStdin = process.stdin;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(process, "stdin", {
+        value: originalStdin,
+        configurable: true,
+      });
+    });
+
+    it("should return empty string when isTTY is true", async () => {
+      const mockStdin = new Readable() as unknown as typeof process.stdin;
+      mockStdin.isTTY = true;
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const result = await readStdin();
+      expect(result).toBe("");
+    });
+
+    it("should read stream data normally under size limit", async () => {
+      const mockStdin = new Readable({
+        read() {},
+      }) as unknown as typeof process.stdin;
+      mockStdin.isTTY = false;
+
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const promise = readStdin();
+      mockStdin.push(Buffer.from("hello "));
+      mockStdin.push(Buffer.from("world"));
+      mockStdin.push(null);
+
+      const result = await promise;
+      expect(result).toBe("hello world");
+    });
+
+    it("should reject/abort and return empty string when stream exceeds MAX_STDIN_BYTES", async () => {
+      const mockStdin = new Readable({
+        read() {},
+      }) as unknown as typeof process.stdin;
+      mockStdin.isTTY = false;
+
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const promise = readStdin();
+      // Push chunk larger than MAX_STDIN_BYTES
+      const largeChunk = Buffer.alloc(MAX_STDIN_BYTES + 100);
+      mockStdin.push(largeChunk);
+
+      const result = await promise;
+      expect(result).toBe("");
+    });
+
+    it("should reject and return empty string when cumulative small chunks exceed MAX_STDIN_BYTES", async () => {
+      const mockStdin = new Readable({
+        read() {},
+      }) as unknown as typeof process.stdin;
+      mockStdin.isTTY = false;
+
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const promise = readStdin();
+      // Push many small chunks, each well under the limit, whose cumulative
+      // size crosses the threshold — locks in the running-counter contract.
+      const chunkSize = 1024 * 1024; // 1 MB per chunk
+      const chunk = Buffer.alloc(chunkSize, "a");
+      for (let pushed = 0; pushed <= MAX_STDIN_BYTES; pushed += chunkSize) {
+        mockStdin.push(chunk);
+      }
+      // Push one more small chunk to push the cumulative total over the limit
+      mockStdin.push(Buffer.from("overflow"));
+
+      const result = await promise;
+      expect(result).toBe("");
+    });
+
+    it("should return empty string on stdin error", async () => {
+      const mockStdin = new Readable({
+        read() {},
+      }) as unknown as typeof process.stdin;
+      mockStdin.isTTY = false;
+
+      Object.defineProperty(process, "stdin", {
+        value: mockStdin,
+        configurable: true,
+      });
+
+      const promise = readStdin();
+      mockStdin.emit("error", new Error("stdin read error"));
+
+      const result = await promise;
+      expect(result).toBe("");
     });
   });
 });
