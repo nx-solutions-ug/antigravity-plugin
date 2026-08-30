@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-08-28T09:54:52.843Z"
+last_updated: "2026-08-30T11:58:08.418Z"
 updated_by: "wiki-agent"
 ---
 
@@ -40,7 +40,7 @@ Releases are published to npm as `@chronova/antigravity-plugin`.
 
 ## OMP agent workflows
 
-The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/minimax-m3` for triage, labelling, review, and issue fixing.
+The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-flash` for triage, labelling, review, and issue fixing.
 
 ### `omp.yml`
 
