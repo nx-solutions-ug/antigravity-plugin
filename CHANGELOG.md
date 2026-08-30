@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.1...v1.0.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* address review — destroy stdin pipe on overflow, move MAX_STDIN_BYTES to constants, cumulative-chunks test ([18a9980](https://github.com/nx-solutions-ug/antigravity-plugin/commit/18a998091589d26e3a14e34e015d0b04b4f5950a))
+* **security:** cap stdin input size to prevent memory exhaustion ([5947279](https://github.com/nx-solutions-ug/antigravity-plugin/commit/5947279ea6d286d674cbdc1d43ad6c7906ba87f4))
+
 ## [1.0.1](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.0...v1.0.1) (2026-08-26)
 
 
