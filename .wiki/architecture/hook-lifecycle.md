@@ -1,8 +1,11 @@
 ---
 type: reference
 title: Hook lifecycle
-description: How chronova-antigravity-plugin handles Antigravity PreToolUse, Stop, and PostToolUse hooks.
-tags: [hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity]
+description: How chronova-antigravity-plugin handles Antigravity PreToolUse,
+  Stop, and PostToolUse hooks.
+tags: [ hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity ]
+last_updated: "2026-08-30T11:11:51.688Z"
+updated_by: "wiki-agent"
 ---
 
 # Hook lifecycle
@@ -51,6 +54,10 @@ The `matcher: "*"` on `PreToolUse` means the hook runs before every tool invocat
 7. Return `{"decision": "allow"}` immediately.
 
 All errors are swallowed and logged; the agent always receives `allow`.
+
+## Stdin input limits
+
+`readStdin` in `src/index.ts` caps the payload it reads from stdin at **10 MB** (`MAX_STDIN_BYTES`, defined in `src/constants.ts`). If more than 10 MB of data is sent, the pipe is destroyed, the read is abandoned, and the plugin continues with an empty payload. This prevents a misbehaving or malicious upstream caller from exhausting memory while still keeping Antigravity unblocked.
 
 ## Stop
 
