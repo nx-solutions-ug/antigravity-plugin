@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-08-28T09:54:52.843Z"
+last_updated: "2026-08-30T12:11:32.650Z"
 updated_by: "wiki-agent"
 ---
 
@@ -40,7 +40,7 @@ Releases are published to npm as `@chronova/antigravity-plugin`.
 
 ## OMP agent workflows
 
-The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/minimax-m3` for triage, labelling, review, and issue fixing.
+The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-flash` for triage, labelling, review, and issue fixing. Each workflow installs OMP with the native bash installer (`curl -fsSL https://omp.sh/install | sh`), then authenticates the `ollama-cloud` provider by inserting `secrets.OLLAMA_API_KEY` into the OMP agent database and running `omp models refresh ollama-cloud`. Agent output is streamed through `.omp/stream-log.py`.
 
 ### `omp.yml`
 
@@ -73,7 +73,7 @@ Triggered by repository dispatch (`issue-triaged`) or manual workflow dispatch w
 
 ### `update-wiki.yml`
 
-Runs on push to `main`, daily at 08:00 UTC, or manually. It installs `@chronova/wiki-agent`, runs `wiki --update`, flattens the output, pushes to the repository's Wiki Git repo, and opens a staging PR for the `.wiki` changes.
+Runs on push to `main`, daily at 08:00 UTC, or manually. It installs the `@chronova/wiki-agent` CLI and runs `wiki --update` with the model from `vars.WIKI_MODEL` (default **`kimi-k3`**) against the configured provider, flattens the `.wiki/` output, pushes to the repository's Wiki Git repo, and opens a `wiki/staging-<timestamp>` PR for any `.wiki` content changes.
 
 ## Common workflow details
 
