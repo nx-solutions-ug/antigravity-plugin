@@ -1,13 +1,20 @@
 ---
 type: reference
 title: Hook lifecycle
-description: How chronova-antigravity-plugin handles Antigravity PreToolUse, Stop, and PostToolUse hooks.
-tags: [hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity]
+description: How chronova-antigravity-plugin handles Antigravity PreToolUse,
+  Stop, and PostToolUse hooks.
+tags: [ hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity ]
+last_updated: "2026-09-02T06:24:33.769Z"
+updated_by: "wiki-agent"
 ---
 
 # Hook lifecycle
 
 The plugin registers lifecycle hooks in [`hooks.json`](./../../hooks.json). The only two currently active hooks are `PreToolUse` and `Stop`. A `PostToolUse` handler exists in `src/index.ts` but is not registered in the manifest.
+
+## Stdin payload reading
+
+Every hook invocation starts by reading the JSON payload from stdin via `readStdin()`. Input is capped at **10 MB** (`MAX_STDIN_BYTES` in `src/constants.ts`). If the cap is exceeded, the plugin logs a warning, destroys the stdin pipe (so the parent writer never blocks on a full OS pipe buffer), and treats the input as empty. This keeps the plugin fail-soft: an oversized payload can never hang the IDE.
 
 ## Hook registration
 
