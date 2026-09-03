@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import * as os from "node:os";
 import { logger } from "./logger.js";
-import type { ToolCall, PreToolUsePayload, StopPayload } from "./types.js";
+import type { ToolCall, PreToolUsePayload, PostToolUsePayload, StopPayload } from "./types.js";
 
 /**
  * Expand a leading ~ to the user's home directory.
@@ -68,7 +68,7 @@ export function resolvePath(baseFolder: string, rawPath: string | undefined): st
 /**
  * Determine the project workspace folder from a hook payload.
  */
-export function extractProjectFolder(payload: PreToolUsePayload | StopPayload): string {
+export function extractProjectFolder(payload: PreToolUsePayload | PostToolUsePayload | StopPayload): string {
   if (payload.workspacePaths && payload.workspacePaths.length > 0 && payload.workspacePaths[0]) {
     const ws = expandTilde(payload.workspacePaths[0]);
     return path.isAbsolute(ws) ? path.normalize(ws) : path.resolve(process.cwd(), ws);

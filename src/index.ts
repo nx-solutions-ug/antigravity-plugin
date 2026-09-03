@@ -7,7 +7,7 @@ import {
 import { queuePendingChange, shouldSendHeartbeat } from "./state.js";
 import { flushPendingHeartbeats } from "./heartbeat.js";
 import { MAX_STDIN_BYTES } from "./constants.js";
-import type { PreToolUsePayload, StopPayload } from "./types.js";
+import type { PreToolUsePayload, PostToolUsePayload, StopPayload } from "./types.js";
 
 /**
  * Read data from standard input up to MAX_STDIN_BYTES limit.
@@ -103,7 +103,8 @@ export function safeParseJson<T>(inputRaw: string): T | null {
   }
   try {
     return JSON.parse(trimmed) as T;
-  } catch {
+  } catch (err) {
+    logger.debug("Failed to parse hook payload JSON", { inputLength: trimmed.length, error: String(err) });
     return null;
   }
 }
@@ -111,7 +112,7 @@ export function safeParseJson<T>(inputRaw: string): T | null {
 export function handlePreToolUse(inputRaw: string): string {
   try {
     const payload = safeParseJson<PreToolUsePayload>(inputRaw);
-    if (payload) {
+    if (payload !== null) {
       const workspacePaths = payload.workspacePaths || [];
       const defaultProjectFolder = extractProjectFolder(payload);
       const toolCall = extractToolCall(payload);
@@ -147,7 +148,7 @@ export function handlePreToolUse(inputRaw: string): string {
 export function handleStop(inputRaw: string): string {
   try {
     const payload = safeParseJson<StopPayload>(inputRaw);
-    if (payload) {
+    if (payload !== null) {
       const projectFolder = extractProjectFolder(payload);
       logger.info("Session terminating in Stop hook, force-flushing heartbeats", { projectFolder });
       flushPendingHeartbeats(projectFolder, true);
@@ -161,8 +162,8 @@ export function handleStop(inputRaw: string): string {
 
 export function handlePostToolUse(inputRaw: string): string {
   try {
-    const payload = safeParseJson<PreToolUsePayload>(inputRaw);
-    if (payload) {
+    const payload = safeParseJson<PostToolUsePayload>(inputRaw);
+    if (payload !== null) {
       const projectFolder = extractProjectFolder(payload);
       // Optional check if there are pending heartbeats that can be flushed
       if (shouldSendHeartbeat(projectFolder)) {
