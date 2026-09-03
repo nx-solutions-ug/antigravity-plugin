@@ -176,15 +176,14 @@ export function parseToolCall(
   let isWrite: boolean;
 
   // 1. Antigravity core tools
-  if (toolName === "view_file") {
+  if (
+    toolName === "view_file" ||
+    toolName === "write_to_file" ||
+    toolName === "replace_file_content" ||
+    toolName === "multi_replace_file_content"
+  ) {
     rawPath = (args.AbsolutePath || args.TargetFile || args.filePath || args.path) as string | undefined;
-    isWrite = false;
-  } else if (toolName === "write_to_file") {
-    rawPath = (args.TargetFile || args.AbsolutePath || args.filePath || args.path) as string | undefined;
-    isWrite = true;
-  } else if (toolName === "replace_file_content" || toolName === "multi_replace_file_content") {
-    rawPath = (args.TargetFile || args.AbsolutePath || args.filePath || args.path) as string | undefined;
-    isWrite = true;
+    isWrite = toolName !== "view_file";
   } else if (toolName === "read_resource") {
     rawPath = (args.Uri || args.uri || args.path) as string | undefined;
     isWrite = false;
