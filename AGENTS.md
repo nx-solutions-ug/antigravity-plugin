@@ -171,7 +171,7 @@ Log file: `~/.chronova-antigravity-plugin/plugin.log`.
 | `auto-manage.yml` | issues/PRs opened/reopened | `needs-triage` label + auto-assign to `niklasschaeffer` |
 | `update-wiki.yml` | push main, daily cron 08:00, workflow_dispatch | `wiki --update` → flatten + publish to repo wiki, open staging PR |
 
-All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_CLOUD_API_KEY` and use model `ollama-cloud/glm-5.3-flash:max`.
+All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_API_KEY` and use model `ollama-cloud/glm-5.3-flash:max`.
 
 ## Contributing
 
