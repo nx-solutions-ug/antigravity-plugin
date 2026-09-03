@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.2...v1.0.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* address review nits (PostToolUsePayload type, explicit null checks, parse-failure debug log) ([4365bf0](https://github.com/nx-solutions-ug/antigravity-plugin/commit/4365bf0a8d8654263e26fec25b435b3a373fcbe5))
+
 ## [1.0.2](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.1...v1.0.2) (2026-08-30)
 
 
