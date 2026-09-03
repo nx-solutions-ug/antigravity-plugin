@@ -15,11 +15,13 @@ describe("hook handler", () => {
     process.env.CHRONOVA_STATE_DIR = testStateDir;
     // Set dummy CLI to avoid trying to actually invoke binary during unit test
     process.env.CHRONOVA_CLI_PATH = "true";
+    process.env.CHRONOVA_LOG_FILE = path.join(testStateDir, "plugin.log");
     fs.mkdirSync(testStateDir, { recursive: true });
   });
 
   afterEach(() => {
     delete process.env.CHRONOVA_STATE_DIR;
+    delete process.env.CHRONOVA_LOG_FILE;
     delete process.env.CHRONOVA_CLI_PATH;
     try {
       fs.rmSync(testStateDir, { recursive: true, force: true });

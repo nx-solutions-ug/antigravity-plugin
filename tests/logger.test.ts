@@ -4,18 +4,15 @@ import * as path from "node:path";
 import * as os from "node:os";
 import { logger } from "../src/logger.js";
 
-const LOG_DIR = path.join(os.homedir(), ".chronova-antigravity-plugin");
-const LOG_FILE = path.join(LOG_DIR, "plugin.log");
-
 describe("logger", () => {
+  const testLogFile = path.join(os.tmpdir(), "chronova-test-log-" + Date.now(), "plugin.log");
   const originalEnv = process.env.CHRONOVA_ANTIGRAVITY_DEBUG;
+  const originalLogEnv = process.env.CHRONOVA_LOG_FILE;
 
   beforeEach(() => {
-    logger._resetDebugCache();
+    process.env.CHRONOVA_LOG_FILE = testLogFile;
     process.env.CHRONOVA_ANTIGRAVITY_DEBUG = "1";
-    if (fs.existsSync(LOG_FILE)) {
-      fs.unlinkSync(LOG_FILE);
-    }
+    logger._resetDebugCache();
   });
 
   afterEach(() => {
@@ -25,20 +22,34 @@ describe("logger", () => {
     } else {
       delete process.env.CHRONOVA_ANTIGRAVITY_DEBUG;
     }
+    if (originalLogEnv !== undefined) {
+      process.env.CHRONOVA_LOG_FILE = originalLogEnv;
+    } else {
+      delete process.env.CHRONOVA_LOG_FILE;
+    }
+    try {
+      fs.rmSync(path.dirname(testLogFile), { recursive: true, force: true });
+    } catch {
+      // ignore
+    }
   });
 
   it("writes log lines without data payload", () => {
     logger.info("Test message without data");
-    expect(fs.existsSync(LOG_FILE)).toBe(true);
-    const content = fs.readFileSync(LOG_FILE, "utf-8");
+    const content = fs.readFileSync(testLogFile, "utf-8");
     expect(content).toMatch(/\[.*\] \[INFO\] Test message without data\n/);
   });
 
   it("writes log lines with data payload", () => {
     logger.info("Test message with data", { foo: "bar" });
-    expect(fs.existsSync(LOG_FILE)).toBe(true);
-    const content = fs.readFileSync(LOG_FILE, "utf-8");
+    const content = fs.readFileSync(testLogFile, "utf-8");
     expect(content).toMatch(/\[.*\] \[INFO\] Test message with data {"foo":"bar"}\n/);
+  });
+
+  it("serializes null data payload instead of omitting it", () => {
+    logger.info("Test message with null data", null);
+    const content = fs.readFileSync(testLogFile, "utf-8");
+    expect(content).toMatch(/\[.*\] \[INFO\] Test message with null data null\n/);
   });
 
   it("writes debug, warn, and error log levels", () => {
@@ -46,7 +57,7 @@ describe("logger", () => {
     logger.warn("Warn msg");
     logger.error("Error msg");
 
-    const content = fs.readFileSync(LOG_FILE, "utf-8");
+    const content = fs.readFileSync(testLogFile, "utf-8");
     expect(content).toContain("[DEBUG] Debug msg");
     expect(content).toContain("[WARN] Warn msg");
     expect(content).toContain("[ERROR] Error msg");
