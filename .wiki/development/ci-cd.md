@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-08-30T12:11:32.650Z"
+last_updated: "2026-09-03T14:01:03.714Z"
 updated_by: "wiki-agent"
 ---
 
@@ -40,7 +40,7 @@ Releases are published to npm as `@chronova/antigravity-plugin`.
 
 ## OMP agent workflows
 
-The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-flash` for triage, labelling, review, and issue fixing. Each workflow installs OMP with the native bash installer (`curl -fsSL https://omp.sh/install | sh`), then authenticates the `ollama-cloud` provider by inserting `secrets.OLLAMA_API_KEY` into the OMP agent database and running `omp models refresh ollama-cloud`. Agent output is streamed through `.omp/stream-log.py`.
+The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-flash:max` for triage, labelling, review, and issue fixing. Each workflow installs OMP with the native bash installer (`curl -fsSL https://omp.sh/install | sh`), then authenticates the `ollama-cloud` provider by inserting `secrets.OLLAMA_API_KEY` into the OMP agent database and running `omp models refresh ollama-cloud`. Agent output is streamed through `.omp/stream-log.py`.
 
 ### `omp.yml`
 
@@ -50,13 +50,20 @@ The workflow installs and pins the `agynio/gh-pr-review` GitHub CLI extension to
 
 ### `omp-ci.yml`
 
-Runs automatically on issue and PR lifecycle events:
+Runs automatically on issue and PR lifecycle events and via manual workflow dispatch:
 
-- **`triage-issue`** — opened issues; reacts with 👀, runs `triage-issue` command, then dispatches `omp-fix-issue.yml` via repository dispatch.
-- **`label-pr`** — opened/synchronize/ready_for_review PRs; skips if both a type label and a priority label are already applied, otherwise runs the `label-pr` command.
-- **`review-pr`** — opened/synchronize/ready_for_review PRs or manual workflow dispatch; skips re-review when the latest synchronized commit is from an agent or bot, then runs the `review-pr` command through the pinned `gh-pr-review` extension.
+- **`triage-issue`** — opened issues (or `workflow_dispatch` with `issue_number`); reacts with 👀, runs the `triage-issue` command, then always dispatches `omp-fix-issue.yml` via repository dispatch (`issue-triaged`).
+- **`label-pr`** — opened/ready_for_review PRs (or `workflow_dispatch` with `pr_number`); skips if both a type label (`bug`, `feature`, `enhancement`, `docs`, `chore`) and a priority label (`priority: critical|high|medium|low`) are already applied, otherwise runs the `label-pr` command.
+- **`cancel-label-on-close`** — PR closed; cancels any in-progress `label-pr` run via the shared `omp-label-<pr>` concurrency group.
 
-The `review-pr` job also uses the pinned `agynio/gh-pr-review` extension at **v1.6.2**.
+### `omp-code-review.yml`
+
+Dedicated code-review workflow, split out of the CI triage workflow. Triggered by PR activity (`opened`, `synchronize`, `ready_for_review`, `review_requested`), submitted reviews, review comments, or manual workflow dispatch with a `pr_number`. Runs in the `omp-code-review-<pr>` concurrency group with in-progress cancellation. Two jobs:
+
+- **`dependency-review`** — PRs opened by `renovate[bot]` or `dependabot[bot]`. Runs the `dependency-review` command (researches changelogs, assesses breaking changes), then verifies that a review or comment was actually posted — the job fails otherwise.
+- **`code-review`** — all other PRs, plus `workflow_dispatch` and any review or review comment from a `jules` user. On `synchronize`, it re-checks via `actions/github-script` whether the head commit was authored by an agent (`opencode-agent`, `opencode`, `github-actions`, `omp-agent`, `chronova-agent`) and skips the re-review if so; explicit `review_requested` is never skipped. A detection step also flags Jules-authored PRs/reviews/comments (`IS_JULES` / `JULES_CONTEXT`) so the review prompt can adapt. Runs the `review-pr` command through the pinned `gh-pr-review` extension, then verifies that a review or comment thread was posted — unless the PR modifies `omp-code-review.yml` itself, in which case verification is skipped by design.
+
+Both jobs use the pinned `agynio/gh-pr-review` extension at **v1.6.2**.
 
 ### `omp-fix-issue.yml`
 
