@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { handlePreToolUse, handleStop, handlePostToolUse, readStdin } from "../src/index.js";
+import { handlePreToolUse, handleStop, handlePostToolUse, readStdin, safeParseJson } from "../src/index.js";
 import { MAX_STDIN_BYTES } from "../src/constants.js";
 import { Readable } from "node:stream";
 import { getPendingHeartbeats } from "../src/state.js";
@@ -26,6 +26,22 @@ describe("hook handler", () => {
     } catch {
       // ignore
     }
+  });
+
+  describe("safeParseJson", () => {
+    it("should correctly parse valid JSON string", () => {
+      const result = safeParseJson<{ key: string }>("{\"key\": \"value\"}");
+      expect(result).toEqual({ key: "value" });
+    });
+
+    it("should return null for empty or whitespace-only input", () => {
+      expect(safeParseJson("")).toBeNull();
+      expect(safeParseJson("   \n\t  ")).toBeNull();
+    });
+
+    it("should return null for invalid JSON string", () => {
+      expect(safeParseJson("{invalid json")).toBeNull();
+    });
   });
 
   describe("handlePreToolUse", () => {

@@ -92,10 +92,26 @@ export async function handleHook(hookType: string, inputRaw: string): Promise<st
   return "{}";
 }
 
+/**
+ * Safely parse a JSON string after trimming.
+ * Returns the parsed payload of type T, or null if empty/whitespace or invalid JSON.
+ */
+export function safeParseJson<T>(inputRaw: string): T | null {
+  const trimmed = inputRaw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function handlePreToolUse(inputRaw: string): string {
   try {
-    if (inputRaw.trim()) {
-      const payload = JSON.parse(inputRaw) as PreToolUsePayload;
+    const payload = safeParseJson<PreToolUsePayload>(inputRaw);
+    if (payload) {
       const workspacePaths = payload.workspacePaths || [];
       const defaultProjectFolder = extractProjectFolder(payload);
       const toolCall = extractToolCall(payload);
@@ -130,8 +146,8 @@ export function handlePreToolUse(inputRaw: string): string {
 
 export function handleStop(inputRaw: string): string {
   try {
-    if (inputRaw.trim()) {
-      const payload = JSON.parse(inputRaw) as StopPayload;
+    const payload = safeParseJson<StopPayload>(inputRaw);
+    if (payload) {
       const projectFolder = extractProjectFolder(payload);
       logger.info("Session terminating in Stop hook, force-flushing heartbeats", { projectFolder });
       flushPendingHeartbeats(projectFolder, true);
@@ -145,8 +161,8 @@ export function handleStop(inputRaw: string): string {
 
 export function handlePostToolUse(inputRaw: string): string {
   try {
-    if (inputRaw.trim()) {
-      const payload = JSON.parse(inputRaw) as PreToolUsePayload;
+    const payload = safeParseJson<PreToolUsePayload>(inputRaw);
+    if (payload) {
       const projectFolder = extractProjectFolder(payload);
       // Optional check if there are pending heartbeats that can be flushed
       if (shouldSendHeartbeat(projectFolder)) {
