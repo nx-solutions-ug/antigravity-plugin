@@ -59,15 +59,84 @@ Then continue with the review.
 ## Step 2: Read the PR
 
 ```bash
-gh pr view $ARGUMENTS --json title,body,labels,author,headRefOid --jq '{title: .title, body: .body, labels: [.labels[].name], author: .author.login, headSha: .headRefOid}'
+gh pr view $ARGUMENTS --json title,body,labels,author,headRefOid,baseRefName --jq '{title: .title, body: .body, labels: [.labels[].name], author: .author.login, headSha: .headRefOid, baseRef: .baseRefName}'
 ```
 
-Store the `headSha` value — you will pass it as `--commit` when starting the pending review so inline comments anchor to the correct commit.
+Store `headSha` — pass it as `--commit` when starting a pending review so comments anchor to the correct commit.
+Store `baseRef` — used for local git diff against base branch.
 
-## Step 3: Read the diff
+## Step 2.5: Fetch Review Threads & Evaluate Conversation History
+
+Fetch all review threads with full comment history:
 
 ```bash
-gh pr diff $ARGUMENTS
+gh pr-review review view $ARGUMENTS -R $REPO_SLUG
+```
+
+To view unresolved threads specifically:
+
+```bash
+gh pr-review review view $ARGUMENTS -R $REPO_SLUG --unresolved
+```
+
+### Evaluate Thread Comments & Developer Justifications
+
+Examine the entire conversation history in all review threads (`reviews[].comments[].thread_comments[]` alongside the parent comment).
+Developers or PR authors often reply explaining intentional design decisions, architectural trade-offs, domain constraints, or why an implementation is correct.
+
+1. **Read all replies in thread conversations**:
+   - Inspect comments from PR authors, human reviewers, or peer agents in `thread_comments[]`.
+   - Extract technical claims, rationale, or domain context provided in comments.
+2. **Ground and verify claims against project standards & codebase**:
+   - Query `AGENTS.md`, `.wiki/`, and surrounding code to verify whether the developer's claim conforms to documented project standards or intentional architecture.
+3. **Assess the impact of developer justifications**:
+   - **Sound & Justified Claims**: If the explanation provides a sound, technically valid justification (e.g. deliberate design override, documented exception, intentional API contract):
+     - **Accept the justification**: Do NOT treat this pattern as a violation or re-raise it.
+     - **Mark for auto-resolution**: If the thread is unresolved, mark the thread to be resolved in Step 2.6.
+     - **Update review context**: Do NOT block the PR on intentional design choices.
+   - **Unsound or Erroneous Claims**: If a reply makes a claim that introduces security vulnerabilities, breaks type safety, or causes genuine logic bugs:
+     - Do not resolve the thread.
+     - Keep the finding active and clearly explain why the justification is insufficient.
+   - **Peer Reviewer Consensus**: Respect consensus from peer reviewers or agents unless a critical bug/vulnerability is present.
+
+## Step 2.6: Auto-Resolve Fixed or Justified Issues
+
+For each unresolved review thread (comments with `is_resolved: false`) check whether:
+1. **Resolved by code change**: Code was modified, removed, or refactored so the reported issue no longer exists, OR the comment has `is_outdated: true`.
+2. **Resolved by valid justification**: The author or reviewer provided a sound, validated explanation in thread comments (evaluated in Step 2.5) demonstrating that the implementation is intentional and correct.
+
+If either condition is met, resolve the thread using DIRECT GraphQL mutation (this bypasses client-side `viewerCanResolve: false` gates):
+
+```bash
+gh api graphql -f query='
+  mutation {
+    resolveReviewThread(input: {threadId: "[THREAD_ID]"}) {
+      thread { isResolved }
+    }
+  }'
+```
+
+If replying with a clarification or resolution comment before resolving:
+
+```bash
+gh pr-review comments reply $ARGUMENTS \
+  -R $REPO_SLUG \
+  --thread-id "[THREAD_ID]" \
+  --body "..."
+```
+
+## Step 3: Read the diff locally
+
+**Read the diff from the local checkout, never via `gh pr diff`.** The GitHub diff API refuses any PR above 300 files with HTTP 406 (`PullRequest.diff too_large`) and `gh pr diff` then silently prints nothing. The repository is checked out at full depth (`fetch-depth: 0`).
+
+```bash
+BASE="origin/${BASE_REF:-main}"
+# List all changed files (excluding deletions)
+git diff --name-only --diff-filter=d "$BASE"...HEAD
+
+# Inspect diffs per module
+git diff "$BASE"...HEAD -- src/
+git diff "$BASE"...HEAD -- tests/
 ```
 
 You MUST parse the diff to map each finding to a specific file path and line number. Inline review comments require a `--path` and `--line` that exist in the PR diff. See **Step 6: Mapping findings to diff lines** for the exact rules.
@@ -188,11 +257,14 @@ Some findings are general (e.g. "missing tests", "architecture concern", "naming
 
 ## Step 7: Common checks (all review types)
 
+Repo-specific standards (backed by `AGENTS.md`):
+- **ESM `.js` imports**: All relative imports use the explicit `.js` extension (bundler resolution, `"type": "module"`); Node builtins via `node:` prefix.
+- **Named exports only**: No default exports anywhere.
+- **Fail-soft error handling**: Every hook handler wraps work in try/catch and returns a benign `{"decision":"allow"}` / `{}`; errors are logged, never rethrown; no empty catch blocks without logging.
+- **Package manager**: `bun install` (never `npm install` / `npm ci`); `bun.lock` is the lockfile.
+- **Test env stubs**: Tests stub `CHRONOVA_STATE_DIR` (temp dir) and `CHRONOVA_CLI_PATH` (`"true"` → no-op binary) for isolation; Vitest tests in `tests/*.test.ts` mirroring `src/` 1:1.
 - **Type safety**: No `as any`, no `@ts-ignore` / `@ts-expect-error` outside test files.
-- **Zod validation**: All API route inputs are validated with Zod v4 schemas.
-- **Prisma imports**: All Prisma usage imports from `@/lib/prisma`, never `new PrismaClient()`.
-- **Redis imports**: All Redis usage imports from `@/lib/redis`, never raw `ioredis`.
-- **Security**: No exposed secrets, no SQL injection, proper auth checks, CSRF on state-changing endpoints.
+- **Security**: No exposed secrets, no command/shell injection in spawn arguments (`execFile` with array args, never `exec`), no path traversal outside the workspace boundary.
 
 ## Step 8: Submit the review with inline comments
 
@@ -304,6 +376,9 @@ Reviewed PR #$ARGUMENTS (<type>): <APPROVE / REQUEST_CHANGES / COMMENT> — <one
 - Do NOT apply labels.
 - Do NOT merge the PR.
 - Deduplicate findings against existing unresolved review threads before posting (Step 6.4).
+- Always read diff locally against `origin/${BASE_REF:-main}`, never via `gh pr diff`.
+- Auto-resolve threads via direct GraphQL `resolveReviewThread` mutation when issues are fixed or justified.
+- Evaluate thread replies and respect sound developer justifications.
 - Use `gh pr-review` subcommands for code reviews with inline comments — NEVER use `gh pr review` for reviews that need inline comments. `gh pr review` only posts a body and cannot attach comments to diff lines.
 - Use `gh pr comment $ARGUMENTS` for dependency update tables — delete older summary comments before posting a fresh one (Step 1 handles this).
 - You MUST perform the dedup check in Step 1 before any other action. Only skip if ALL prior review findings are addressed at the current head — do NOT blanket-skip just because a review exists. Old dependency summary comments are deleted in Step 1 so a fresh one can be posted.
