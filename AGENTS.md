@@ -72,7 +72,7 @@ Antigravity tool call / session stop
 | `src/` | Plugin source — 6 modules (index, tracker, heartbeat, state, logger, types). Compiled to `dist/` via `tsc`. |
 | `tests/` | Vitest unit tests — one `*.test.ts` per source module, colocated here (not in `src/`). |
 | `dist/` | Compiled output (`tsc`, `outDir: dist`). Published artifact. Git-ignored. |
-| `.github/workflows/` | 7 CI workflows (test, release, omp, omp-ci, omp-fix-issue, auto-manage, update-wiki). |
+| `.github/workflows/` | 8 CI workflows (test, release, omp, omp-ci, omp-code-review, omp-fix-issue, auto-manage, update-wiki). |
 | `.wiki/` | wiki-agent generated docs (architecture, quickstart). Regenerate via `wiki --update`. Do not hand-edit. |
 | `public/` | Static assets (e.g. README banner). |
 | `plugin.json` | Antigravity plugin manifest (`name` only). |
@@ -164,13 +164,14 @@ Log file: `~/.chronova-antigravity-plugin/plugin.log`.
 |----------|---------|---------|
 | `test.yml` | push (main/develop/feat/\*/fix/\*), PR | type-check → lint → test → build |
 | `release.yml` | push to main | test gate → semantic-release (npm + git + github); then `gh release edit` to replace notes with full commit list |
-| `omp.yml` | issue_comment, pull_request_review_comment | `/omp` agent command → runs OMP agent (model `ollama-cloud/glm-5.3-flash`) |
-| `omp-ci.yml` | issues/PRs events | triage-issue, label-pr, review-pr (via `gh-pr-review` extension) |
+| `omp.yml` | issue_comment, pull_request_review_comment | `/omp` agent command → runs OMP agent (model `ollama-cloud/glm-5.3-flash:max`) |
+| `omp-ci.yml` | issues/PRs events | triage-issue, label-pr |
+| `omp-code-review.yml` | PR opened/synchronize/ready_for_review/review_requested, review comments, manual dispatch | dependency-review (renovate/dependabot PRs), code-review (via `gh-pr-review` extension) |
 | `omp-fix-issue.yml` | repository_dispatch (issue-triaged), workflow_dispatch | OMP agent fixes a triaged issue |
 | `auto-manage.yml` | issues/PRs opened/reopened | `needs-triage` label + auto-assign to `niklasschaeffer` |
 | `update-wiki.yml` | push main, daily cron 08:00, workflow_dispatch | `wiki --update` → flatten + publish to repo wiki, open staging PR |
 
-All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_CLOUD_API_KEY` and use model `ollama-cloud/glm-5.3-flash`.
+All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_CLOUD_API_KEY` and use model `ollama-cloud/glm-5.3-flash:max`.
 
 ## Contributing
 
