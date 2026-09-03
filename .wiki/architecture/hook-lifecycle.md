@@ -1,8 +1,11 @@
 ---
 type: reference
 title: Hook lifecycle
-description: How chronova-antigravity-plugin handles Antigravity PreToolUse, Stop, and PostToolUse hooks.
-tags: [hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity]
+description: How chronova-antigravity-plugin handles Antigravity PreToolUse,
+  Stop, and PostToolUse hooks.
+tags: [ hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity ]
+last_updated: "2026-09-03T22:03:05.252Z"
+updated_by: wiki-agent
 ---
 
 # Hook lifecycle
@@ -40,6 +43,10 @@ The plugin registers lifecycle hooks in [`hooks.json`](./../../hooks.json). The 
 
 The `matcher: "*"` on `PreToolUse` means the hook runs before every tool invocation.
 
+## Payload parsing
+
+All three handlers parse the stdin payload through `safeParseJson<T>` in `src/index.ts`. It trims the input, returns `null` for empty or whitespace-only input, and catches `JSON.parse` failures (logging them at debug level) instead of throwing. Each handler parses its own payload type: `PreToolUsePayload`, `StopPayload`, or `PostToolUsePayload`. A handler with an empty or malformed payload simply skips work and returns its benign response.
+
 ## PreToolUse
 
 1. Read the JSON payload from stdin.
@@ -63,7 +70,7 @@ This ensures the final batch of edits is sent to Chronova even if the rate limit
 
 ## PostToolUse
 
-`src/index.ts` exports `handlePostToolUse`, but it is **not registered** in `hooks.json`. It performs an opportunistic flush if the rate limit window has reopened after a tool call. It can be enabled by adding a `PostToolUse` entry to `hooks.json` without code changes.
+`src/index.ts` exports `handlePostToolUse`, but it is **not registered** in `hooks.json`. It parses a `PostToolUsePayload` (which adds an `error` field for failed tool calls) and performs an opportunistic flush if the rate limit window has reopened after a tool call. It can be enabled by adding a `PostToolUse` entry to `hooks.json` without code changes.
 
 ## Hook return values
 
