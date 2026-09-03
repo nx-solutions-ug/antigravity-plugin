@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { handlePreToolUse, handleStop, handlePostToolUse, readStdin } from "../src/index.js";
+import { handlePreToolUse, handleStop, handlePostToolUse, readStdin, safeParseJson } from "../src/index.js";
 import { MAX_STDIN_BYTES } from "../src/constants.js";
+import type { PostToolUsePayload } from "../src/types.js";
 import { Readable } from "node:stream";
 import { getPendingHeartbeats } from "../src/state.js";
 
@@ -26,6 +27,29 @@ describe("hook handler", () => {
     } catch {
       // ignore
     }
+  });
+
+  describe("safeParseJson", () => {
+    it("should correctly parse valid JSON string", () => {
+      const result = safeParseJson<{ key: string }>("{\"key\": \"value\"}");
+      expect(result).toEqual({ key: "value" });
+    });
+
+    it("should return null for empty or whitespace-only input", () => {
+      expect(safeParseJson("")).toBeNull();
+      expect(safeParseJson("   \n\t  ")).toBeNull();
+    });
+
+    it("should return null for invalid JSON string", () => {
+      expect(safeParseJson("{invalid json")).toBeNull();
+    });
+
+    it("should return falsy-but-valid JSON payloads instead of null", () => {
+      expect(safeParseJson<number>("0")).toBe(0);
+      expect(safeParseJson<string>('""')).toBe("");
+      expect(safeParseJson<boolean>("false")).toBe(false);
+      expect(safeParseJson<string>("null")).toBeNull();
+    });
   });
 
   describe("handlePreToolUse", () => {
@@ -87,6 +111,14 @@ describe("hook handler", () => {
       });
 
       const response = handlePostToolUse(payload);
+      expect(JSON.parse(response)).toEqual({});
+    });
+    it("should process valid PostToolUse payloads", () => {
+      const payload: PostToolUsePayload = {
+        workspacePaths: [projectFolder],
+        error: "tool failed",
+      };
+      const response = handlePostToolUse(JSON.stringify(payload));
       expect(JSON.parse(response)).toEqual({});
     });
   });
