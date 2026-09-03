@@ -18,11 +18,13 @@ describe("state", () => {
 
   beforeEach(() => {
     process.env.CHRONOVA_STATE_DIR = testStateDir;
+    process.env.CHRONOVA_LOG_FILE = path.join(testStateDir, "plugin.log");
     fs.mkdirSync(testStateDir, { recursive: true });
   });
 
   afterEach(() => {
     delete process.env.CHRONOVA_STATE_DIR;
+    delete process.env.CHRONOVA_LOG_FILE;
     try {
       fs.rmSync(testStateDir, { recursive: true, force: true });
     } catch {

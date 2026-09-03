@@ -2,8 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 
-const LOG_DIR = path.join(os.homedir(), ".chronova-antigravity-plugin");
-const LOG_FILE = path.join(LOG_DIR, "plugin.log");
+const DEFAULT_LOG_FILE = path.join(os.homedir(), ".chronova-antigravity-plugin", "plugin.log");
 
 type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
@@ -33,12 +32,11 @@ function write(level: LogLevel, msg: string, data?: unknown): void {
   if (level === "DEBUG" && !isDebugEnabled()) return;
 
   try {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
+    const logFile = process.env.CHRONOVA_LOG_FILE || DEFAULT_LOG_FILE;
+    fs.mkdirSync(path.dirname(logFile), { recursive: true });
     const ts = new Date().toISOString();
-    const line = data !== undefined
-      ? `[${ts}] [${level}] ${msg} ${JSON.stringify(data)}\n`
-      : `[${ts}] [${level}] ${msg}\n`;
-    fs.appendFileSync(LOG_FILE, line);
+    const line = `[${ts}] [${level}] ${msg}${data !== undefined ? ` ${JSON.stringify(data)}` : ""}\n`;
+    fs.appendFileSync(logFile, line);
   } catch {
     // Swallow log write failures — never crash the plugin
   }
