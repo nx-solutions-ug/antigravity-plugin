@@ -35,9 +35,7 @@ function write(level: LogLevel, msg: string, data?: unknown): void {
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
     const ts = new Date().toISOString();
-    const line = data !== undefined
-      ? `[${ts}] [${level}] ${msg} ${JSON.stringify(data)}\n`
-      : `[${ts}] [${level}] ${msg}\n`;
+    const line = `[${ts}] [${level}] ${msg}${data !== undefined ? ` ${JSON.stringify(data)}` : ""}\n`;
     fs.appendFileSync(LOG_FILE, line);
   } catch {
     // Swallow log write failures — never crash the plugin
