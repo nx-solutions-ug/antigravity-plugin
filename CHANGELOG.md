@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.3...v1.0.4) (2026-09-03)
+
+
+### Bug Fixes
+
+* isolate logger writes via CHRONOVA_LOG_FILE and stub in tests ([f59c4a3](https://github.com/nx-solutions-ug/antigravity-plugin/commit/f59c4a31800210afa75a99d389d8a76b5ee63362))
+
 ## [1.0.3](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.2...v1.0.3) (2026-09-03)
 
 
