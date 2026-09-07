@@ -4,7 +4,7 @@ title: Hook lifecycle
 description: How chronova-antigravity-plugin handles Antigravity PreToolUse,
   Stop, and PostToolUse hooks.
 tags: [ hooks, lifecycle, PreToolUse, Stop, PostToolUse, antigravity ]
-last_updated: "2026-09-07T14:13:04.816Z"
+last_updated: "2026-09-07T17:23:42.279Z"
 updated_by: "wiki-agent"
 ---
 
@@ -62,9 +62,11 @@ All errors are swallowed and logged; the agent always receives `allow`.
 ## Stop
 
 1. Read the JSON payload from stdin.
-2. Extract `workspacePaths[0]` or fall back to `process.cwd()`.
+2. Extract the project folder via `extractProjectFolder`: `workspacePaths[0]`, then the tool call `Cwd` argument, then `process.cwd()`.
 3. Call `flushPendingHeartbeats(projectFolder, true)` to bypass the rate limit.
 4. Return `{}`.
+
+Steps 2–3 only run when the payload parses successfully (`safeParseJson` returns non-null). An empty or invalid payload is a no-op that still returns `{}`.
 
 This ensures the final batch of edits is sent to Chronova even if the rate limit would otherwise suppress them.
 

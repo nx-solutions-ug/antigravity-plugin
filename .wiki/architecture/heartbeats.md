@@ -3,7 +3,7 @@ type: reference
 title: Heartbeats & rate limiting
 description: Persistent per-project state, rate limiting, and chronova-cli dispatch.
 tags: [ heartbeats, state, rate-limit, chronova-cli, dispatch ]
-last_updated: 2026-09-07T14:13:32.065Z
+last_updated: 2026-09-07T17:23:45.706Z
 updated_by: wiki-agent
 ---
 
@@ -34,7 +34,7 @@ interface ProjectState {
 }
 ```
 
-Each unique file path keeps the most recent `isWrite` flag. A read followed by a write is recorded as a write.
+Each unique file path keeps the most recent `timestamp` and **OR-combines the `isWrite` flags** (`state.ts`, `queuePendingChange`): a read followed by a write is recorded as a write, and a write followed by a read stays a write.
 
 ## Flush behavior
 
