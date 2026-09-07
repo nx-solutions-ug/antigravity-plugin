@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-09-03T14:16:04.146Z"
+last_updated: "2026-09-04T18:43:31.563Z"
 updated_by: "wiki-agent"
 ---
 
@@ -44,7 +44,7 @@ The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-f
 
 ### `omp.yml`
 
-Triggered by comments containing `/omp` or `/oc` on issues or pull request review comments. It installs the OMP agent, authenticates to `ollama-cloud`, and runs a command file from `.omp/commands/<command>.md` if one matches the prompt, or a freeform prompt otherwise. For PR comments it appends commit/push instructions from `.omp/commands/_pr-commit-push.md`.
+Triggered by comments starting with or containing ` /omp` on issues or pull request review comments (bot comments excluded). It installs the OMP agent, authenticates to `ollama-cloud`, and runs a command file from `.omp/commands/<command>.md` if one matches the prompt, or a freeform prompt otherwise. For PR comments it appends commit/push instructions from `.omp/commands/_pr-commit-push.md`.
 
 The workflow installs and pins the `agynio/gh-pr-review` GitHub CLI extension to **v1.6.2**.
 
@@ -53,10 +53,17 @@ The workflow installs and pins the `agynio/gh-pr-review` GitHub CLI extension to
 Runs automatically on issue and PR lifecycle events:
 
 - **`triage-issue`** — opened issues; reacts with 👀, runs `triage-issue` command, then dispatches `omp-fix-issue.yml` via repository dispatch.
-- **`label-pr`** — opened/synchronize/ready_for_review PRs; skips if both a type label and a priority label are already applied, otherwise runs the `label-pr` command.
-- **`review-pr`** — opened/synchronize/ready_for_review PRs or manual workflow dispatch; skips re-review when the latest synchronized commit is from an agent or bot, then runs the `review-pr` command through the pinned `gh-pr-review` extension.
+- **`label-pr`** — opened/ready_for_review PRs; skips if both a type label and a priority label are already applied, otherwise runs the `label-pr` command.
+- **`cancel-label-on-close`** — PR closed; cancels any in-progress `label-pr` run via a shared concurrency group.
 
-The `review-pr` job also uses the pinned `agynio/gh-pr-review` extension at **v1.6.2**.
+PR code review is **not** handled here — it lives in `omp-code-review.yml` (see below).
+
+### `omp-code-review.yml`
+
+Runs on PR opened/synchronize/ready_for_review/review_requested, PR reviews, review comments, or manual dispatch with a PR number, using a per-PR concurrency group. Two jobs:
+
+- **`dependency-review`** — Renovate/Dependabot PRs only; researches changelogs and assesses breaking changes.
+- **`code-review`** — other PRs (agent/bot-authored head commits trigger no re-review); PR review or comment events from Jules also trigger it. Runs the `review-pr` command through the pinned `agynio/gh-pr-review` extension at **v1.6.2**.
 
 ### `omp-fix-issue.yml`
 
@@ -73,7 +80,7 @@ Triggered by repository dispatch (`issue-triaged`) or manual workflow dispatch w
 
 ### `update-wiki.yml`
 
-Runs on push to `main`, daily at 08:00 UTC, or manually. It installs the `@chronova/wiki-agent` CLI and runs `wiki --update` with the model from `vars.WIKI_MODEL` (default **`kimi-k3`**) against the configured provider, flattens the `.wiki/` output, pushes to the repository's Wiki Git repo, and opens a `wiki/staging-<timestamp>` PR for any `.wiki` content changes.
+Runs on push to `main`, daily at 08:00 UTC, or manually. It installs the `@chronova/wiki-agent` CLI and runs `wiki --update` with the model from `vars.WIKI_MODEL` (default **`glm-5.3-flash`**) against the configured provider, flattens the `.wiki/` output, pushes to the repository's Wiki Git repo, and opens a `wiki/staging-<timestamp>` PR for any `.wiki` content changes.
 
 ## Common workflow details
 
