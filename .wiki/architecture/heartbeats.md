@@ -2,7 +2,9 @@
 type: reference
 title: Heartbeats & rate limiting
 description: Persistent per-project state, rate limiting, and chronova-cli dispatch.
-tags: [heartbeats, state, rate-limit, chronova-cli, dispatch]
+tags: [ heartbeats, state, rate-limit, chronova-cli, dispatch ]
+last_updated: 2026-09-07T14:13:32.065Z
+updated_by: wiki-agent
 ---
 
 # Heartbeats & rate limiting
@@ -78,6 +80,7 @@ The plugin identifier uses the version from `package.json`.
 |----------|--------|
 | `CHRONOVA_CLI_PATH` | Override the path to `chronova-cli`. |
 | `CHRONOVA_STATE_DIR` | Override the directory used for project state files. |
+| `CHRONOVA_LOG_FILE` | Override the log file path (default `~/.chronova-antigravity-plugin/plugin.log`). |
 | `CHRONOVA_ANTIGRAVITY_DEBUG` | Enable debug logging when set to `1`. |
 | `CHRONOVA_PI_DEBUG` | Also enables debug logging when set to `1`. |
 | `CHRONOVA_DEBUG` | Also enables debug logging when set to `1`. |
