@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-09-04T18:43:31.563Z"
+last_updated: "2026-09-09T04:14:07.459Z"
 updated_by: "wiki-agent"
 ---
 
@@ -80,7 +80,7 @@ Triggered by repository dispatch (`issue-triaged`) or manual workflow dispatch w
 
 ### `update-wiki.yml`
 
-Runs on push to `main`, daily at 08:00 UTC, or manually. It installs the `@chronova/wiki-agent` CLI and runs `wiki --update` with the model from `vars.WIKI_MODEL` (default **`glm-5.3-flash`**) against the configured provider, flattens the `.wiki/` output, pushes to the repository's Wiki Git repo, and opens a `wiki/staging-<timestamp>` PR for any `.wiki` content changes.
+Runs on a daily schedule at 12:00 AM UTC (`cron: "0 0 * * *"`) or manually via `workflow_dispatch`. It installs the `@chronova/wiki-agent` CLI and runs `wiki --update` with the model from `vars.WIKI_MODEL` (default **`glm-5.3-flash`**) against the configured provider, flattens the `.wiki/` output, pushes to the repository's Wiki Git repo, and opens a `wiki/staging-<timestamp>` PR for any `.wiki` content changes.
 
 ## Common workflow details
 
