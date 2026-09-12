@@ -71,7 +71,7 @@ Antigravity tool call / session stop
 bun install                # install dependencies (uses bun.lock)
 bun run build              # tsc (prebuild cleans dist/ first)
 bun run type-check         # tsc --noEmit
-bun run lint               # eslint .
+bun run lint               # oxlint
 bun run test               # vitest run (single pass)
 bun run test:watch         # vitest (watch mode)
 bun run pack               # bun pm pack (local tarball)
@@ -91,8 +91,9 @@ CI runs the full gate: `type-check` → `lint` → `test` → `build` (`.github/
 - **State & log directories.** All plugin data lives under `~/.chronova-antigravity-plugin/`: `state/<sha256(folder).slice(0,16)>.json` (per-project pending changes + last heartbeat timestamp) and `plugin.log` (file logger). `CHRONOVA_STATE_DIR` overrides the state dir root.
 - **Path handling** (`tracker.ts`): expands `~`, decodes `file://`, strips `:line`/`#L` selectors, rejects non-file URI schemes (`artifact://`, `memory://`, `ssh://`). Enforces workspace boundary via `findMatchingWorkspace`. Ignores internal paths matching `.gemini`, `.chronova`, `.omp`, `node_modules`, `.git`, `/tmp`, `/proc`, `brain/`, `mcp/`, etc. (`IGNORED_PATH_PATTERNS`, `tracker.ts:124-137`).
 - **Tool name → read/write classification** (`parseToolCall`, `tracker.ts:167-215`): `view_file`/`read_resource` = read; `write_to_file`/`replace_file_content`/`multi_replace_file_content` = write; `call_mcp_tool` inspects inner `ToolName` for write verbs; generic fallback via regex.
-- **Strict TypeScript.** `strict: true`, target ES2022, `moduleResolution: bundler`, no declaration files / source maps. `@typescript-eslint/no-unused-vars` errors with `^_` ignore pattern for args/vars.
-- **ESLint flat config** (`eslint.config.js`): `@eslint/js` + `typescript-eslint` recommended. Allowed globals: `process`, `console`, `fetch`, `Buffer`, `setTimeout`. Ignores `dist/`, `node_modules/`, `*.config.js`, `*.config.mjs`, `.worktrees/`.
+- **Strict TypeScript.** `strict: true`, target ES2022, `moduleResolution: bundler`, no declaration files / source maps. `no-unused-vars` errors with `^_` ignore pattern for args/vars.
+- **oxlint** (`.oxlintrc.json`): typescript, unicorn, oxc, import, react and vitest plugins with the `correctness` category as errors. Ignores `node_modules/`, `dist/`, `build/`, `out/`, `.worktrees/`.
+- **oxfmt** (`.oxfmtrc.json`): single quotes, semicolons, 2-space indent, 100 columns, trailing commas.
 
 ## Important Files
 
@@ -106,12 +107,12 @@ CI runs the full gate: `type-check` → `lint` → `test` → `build` (`.github/
 | `src/types.ts`     | Type-only: `ToolCall`, `PreToolUsePayload`, `PostToolUsePayload`, `StopPayload`, `HeartbeatPayload`, `ProjectState`.                                               |
 | `hooks.json`       | Antigravity hook registration (`PreToolUse` matcher `*`, `Stop`).                                                                                                  |
 | `plugin.json`      | Antigravity plugin manifest.                                                                                                                                       |
-| `package.json`     | Manifest, scripts, `packageManager: bun@1.3.14`, `engines: node>=20`.                                                                                              |
+| `package.json`     | Manifest, scripts, `packageManager: bun@1.4.2`, `engines: node>=20`.                                                                                               |
 | `.releaserc.json`  | semantic-release config (main/beta/alpha branches, npm + git + github plugins).                                                                                    |
 
 ## Runtime/Tooling Preferences
 
-- **Package manager: Bun** (`packageManager: bun@1.3.14`). Use `bun install` (not `npm ci` / `npm install`).
+- **Package manager: Bun** (`packageManager: bun@1.4.2`). Use `bun install` (not `npm ci` / `npm install`).
 - **Node >= 20** required (`engines`). CI uses Bun + Node 25.
 - **Build: `tsc`** (no bundler). `prebuild` cleans `dist/`; `prepublishOnly` builds.
 - **Publishing:** `semantic-release` publishes to npm (`@chronova/antigravity-plugin`, public access). Published files allowlist: `dist/`, `plugin.json`, `hooks.json`, `README.md`, `LICENSE`.

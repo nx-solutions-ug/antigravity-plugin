@@ -111,7 +111,8 @@ chronova-cli \
 ├── hooks.json        # Antigravity lifecycle hook definitions
 ├── package.json      # NPM package configuration
 ├── tsconfig.json     # TypeScript build configuration
-├── eslint.config.js  # ESLint flat configuration
+├── .oxlintrc.json    # oxlint configuration
+├── .oxfmtrc.json     # oxfmt configuration
 ├── src/
 │   ├── index.ts      # Hook CLI entrypoint & event routing
 │   ├── tracker.ts    # ToolCall extraction, URI & path sanitization
