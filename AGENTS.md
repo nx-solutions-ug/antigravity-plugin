@@ -1,18 +1,5 @@
 # Repository Guidelines
 
-<!-- wiki-agent -->
-## Wiki Agent
-
-This repository is managed by [wiki-agent](https://github.com/nx-solutions-ug/wiki-agent).
-Documentation is generated under `.wiki/` and kept in sync via `wiki --update`.
-Do not hand-edit files under `.wiki/` — regenerate them with `wiki --update` instead.
-
-```yaml
-version: 1.17.1
-wiki-path: .wiki/
-initialized: 2026-08-27T05:49:06.970Z
-```
-
 ## Project Overview
 
 `@chronova/antigravity-plugin` is a heartbeat-tracking plugin for **Google Antigravity** (Gemini 2.0 IDE/CLI). Antigravity discovers the plugin via `plugin.json` and registers lifecycle hooks from `hooks.json`. On each tool call (`PreToolUse`) and at session end (`Stop`), the plugin reads a JSON payload from stdin, extracts the touched file path, classifies it as read or write, persists pending changes to disk (rate-limited to one heartbeat per 60s per project), and dispatches them to `chronova-cli` as a detached, fire-and-forget child process. The plugin is deliberately **fail-soft**: every handler wraps work in try/catch and always returns a benign `{"decision":"allow"}` / `{}` so it can never block the IDE.
@@ -72,8 +59,7 @@ Antigravity tool call / session stop
 | `src/` | Plugin source — 6 modules (index, tracker, heartbeat, state, logger, types). Compiled to `dist/` via `tsc`. |
 | `tests/` | Vitest unit tests — one `*.test.ts` per source module, colocated here (not in `src/`). |
 | `dist/` | Compiled output (`tsc`, `outDir: dist`). Published artifact. Git-ignored. |
-| `.github/workflows/` | 8 CI workflows (test, release, claude, claude-ci, claude-code-review, claude-fix-issue, auto-manage, update-wiki). |
-| `.wiki/` | wiki-agent generated docs (architecture, quickstart). Regenerate via `wiki --update`. Do not hand-edit. |
+| `.github/workflows/` | 7 CI workflows (test, release, claude, claude-ci, claude-code-review, claude-fix-issue, auto-manage). |
 | `public/` | Static assets (e.g. README banner). |
 | `plugin.json` | Antigravity plugin manifest (`name` only). |
 | `hooks.json` | Antigravity hook registration — `PreToolUse` (matcher `*`) and `Stop`, both `node dist/index.js --hook <Type>` with 15s timeout. |
@@ -169,7 +155,6 @@ Log file: `~/.chronova-antigravity-plugin/plugin.log`.
 | `claude-code-review.yml` | PR opened/synchronize/ready_for_review/review_requested, review comments, manual dispatch | dependency-review (renovate/dependabot PRs), code-review (via `gh-pr-review` extension) |
 | `claude-fix-issue.yml` | repository_dispatch (issue-triaged), workflow_dispatch | Claude fixes a triaged issue |
 | `auto-manage.yml` | issues/PRs opened/reopened | `needs-triage` label + auto-assign to `niklasschaeffer` |
-| `update-wiki.yml` | push main, daily cron 08:00, workflow_dispatch | `wiki --update` → flatten + publish to repo wiki, open staging PR |
 
 All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_API_KEY` and use model `ollama-cloud/glm-5.3-flash:max`.
 

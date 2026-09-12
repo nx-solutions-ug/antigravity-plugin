@@ -42,7 +42,7 @@ If you cannot find release notes, state so explicitly. Do NOT fabricate changes.
 
 ## Step 3: Assess Impact on chronova-antigravity-plugin
 
-- Check project standards in `AGENTS.md` and `.wiki/` for dependency guidelines.
+- Check project standards in `AGENTS.md` for dependency guidelines.
 - Check whether version constraints in `package.json` are compatible, and confirm `hooks.json` and `plugin.json` remain compatible with the plugin runtime.
 - For library updates: check if any deprecated or removed APIs are used in `src/` (scan imports and usage across `src/`).
 - Note any new features or performance improvements we might leverage.
