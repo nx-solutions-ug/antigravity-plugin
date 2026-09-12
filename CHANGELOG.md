@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.4...v1.0.5) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** bind the head SHA with real jq, not gh api --jq ([9bd58d8](https://github.com/nx-solutions-ug/antigravity-plugin/commit/9bd58d82449c4977ee9a5a33b1751fada2a68044))
+
 ## [1.0.4](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.3...v1.0.4) (2026-09-03)
 
 
