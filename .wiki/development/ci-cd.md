@@ -3,7 +3,7 @@ type: reference
 title: CI/CD workflows
 description: GitHub Actions workflows that test, release, review, and publish the wiki.
 tags: [ ci, cd, github-actions, workflows, release, omp ]
-last_updated: "2026-09-09T04:14:07.459Z"
+last_updated: "2026-09-12T04:11:54.121Z"
 updated_by: "wiki-agent"
 ---
 
@@ -44,13 +44,13 @@ The repository uses the **OMP agent** (`omp`) with model `ollama-cloud/glm-5.3-f
 
 ### `omp.yml`
 
-Triggered by comments starting with or containing ` /omp` on issues or pull request review comments (bot comments excluded). It installs the OMP agent, authenticates to `ollama-cloud`, and runs a command file from `.omp/commands/<command>.md` if one matches the prompt, or a freeform prompt otherwise. For PR comments it appends commit/push instructions from `.omp/commands/_pr-commit-push.md`.
+Triggered by comments starting with or containing ` /omp` on issues or pull request review comments (bot comments excluded). It installs the OMP agent, authenticates to `ollama-cloud`, and runs a command file from `.omp/commands/<command>.md` if one matches the prompt, or a freeform prompt otherwise. Only for freeform prompts on PR comments (not issue comments, and not command-file matches) does it append commit/push instructions from `.omp/commands/_pr-commit-push.md`, so the agent commits and pushes its changes back to the PR branch instead of ending its turn.
 
 The workflow installs and pins the `agynio/gh-pr-review` GitHub CLI extension to **v1.6.2**.
 
 ### `omp-ci.yml`
 
-Runs automatically on issue and PR lifecycle events:
+Runs automatically on issue and PR lifecycle events (also manually dispatchable with an issue or PR number):
 
 - **`triage-issue`** — opened issues; reacts with 👀, runs `triage-issue` command, then dispatches `omp-fix-issue.yml` via repository dispatch.
 - **`label-pr`** — opened/ready_for_review PRs; skips if both a type label and a priority label are already applied, otherwise runs the `label-pr` command.
