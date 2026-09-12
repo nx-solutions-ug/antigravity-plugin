@@ -1,20 +1,16 @@
-import { logger } from "./logger.js";
-import {
-  extractProjectFolder,
-  extractToolCall,
-  parseToolCall,
-} from "./tracker.js";
-import { queuePendingChange, shouldSendHeartbeat } from "./state.js";
-import { flushPendingHeartbeats } from "./heartbeat.js";
-import { MAX_STDIN_BYTES } from "./constants.js";
-import type { PreToolUsePayload, PostToolUsePayload, StopPayload } from "./types.js";
+import { logger } from './logger.js';
+import { extractProjectFolder, extractToolCall, parseToolCall } from './tracker.js';
+import { queuePendingChange, shouldSendHeartbeat } from './state.js';
+import { flushPendingHeartbeats } from './heartbeat.js';
+import { MAX_STDIN_BYTES } from './constants.js';
+import type { PreToolUsePayload, PostToolUsePayload, StopPayload } from './types.js';
 
 /**
  * Read data from standard input up to MAX_STDIN_BYTES limit.
  */
 export async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
-    return "";
+    return '';
   }
 
   const chunks: Buffer[] = [];
@@ -24,9 +20,9 @@ export async function readStdin(): Promise<string> {
     let resolved = false;
 
     const cleanup = () => {
-      process.stdin.removeListener("data", onData);
-      process.stdin.removeListener("end", onEnd);
-      process.stdin.removeListener("error", onError);
+      process.stdin.removeListener('data', onData);
+      process.stdin.removeListener('end', onEnd);
+      process.stdin.removeListener('error', onError);
     };
 
     const safeResolve = (val: string) => {
@@ -41,7 +37,7 @@ export async function readStdin(): Promise<string> {
       const buf = Buffer.from(chunk);
       totalBytes += buf.length;
       if (totalBytes > MAX_STDIN_BYTES) {
-        logger.warn("Stdin input exceeded size limit", {
+        logger.warn('Stdin input exceeded size limit', {
           totalBytes,
           limit: MAX_STDIN_BYTES,
         });
@@ -51,7 +47,7 @@ export async function readStdin(): Promise<string> {
         // Destroy the pipe so the parent writer unblocks instead of hanging
         // on a full OS pipe buffer (fail-soft: never block the host IDE).
         process.stdin.destroy();
-        resolve("");
+        resolve('');
         return;
       }
       chunks.push(buf);
@@ -59,17 +55,17 @@ export async function readStdin(): Promise<string> {
 
     const onEnd = () => {
       cleanup();
-      resolve(Buffer.concat(chunks).toString("utf8"));
+      resolve(Buffer.concat(chunks).toString('utf8'));
     };
 
     const onError = (err: unknown) => {
-      logger.error("Error reading stdin", { error: String(err) });
-      safeResolve("");
+      logger.error('Error reading stdin', { error: String(err) });
+      safeResolve('');
     };
 
-    process.stdin.on("data", onData);
-    process.stdin.on("end", onEnd);
-    process.stdin.on("error", onError);
+    process.stdin.on('data', onData);
+    process.stdin.on('end', onEnd);
+    process.stdin.on('error', onError);
   });
 }
 
@@ -77,19 +73,19 @@ export async function readStdin(): Promise<string> {
  * Main hook execution router.
  */
 export async function handleHook(hookType: string, inputRaw: string): Promise<string> {
-  if (hookType === "PreToolUse") {
+  if (hookType === 'PreToolUse') {
     return handlePreToolUse(inputRaw);
   }
 
-  if (hookType === "Stop") {
+  if (hookType === 'Stop') {
     return handleStop(inputRaw);
   }
 
-  if (hookType === "PostToolUse") {
+  if (hookType === 'PostToolUse') {
     return handlePostToolUse(inputRaw);
   }
 
-  return "{}";
+  return '{}';
 }
 
 /**
@@ -104,7 +100,10 @@ export function safeParseJson<T>(inputRaw: string): T | null {
   try {
     return JSON.parse(trimmed) as T;
   } catch (err) {
-    logger.debug("Failed to parse hook payload JSON", { inputLength: trimmed.length, error: String(err) });
+    logger.debug('Failed to parse hook payload JSON', {
+      inputLength: trimmed.length,
+      error: String(err),
+    });
     return null;
   }
 }
@@ -121,7 +120,7 @@ export function handlePreToolUse(inputRaw: string): string {
         const parsed = parseToolCall(toolCall, defaultProjectFolder, workspacePaths);
         if (parsed) {
           const projectFolder = parsed.projectFolder || defaultProjectFolder;
-          logger.debug("Captured file activity in PreToolUse", {
+          logger.debug('Captured file activity in PreToolUse', {
             projectFolder,
             entity: parsed.entity,
             isWrite: parsed.isWrite,
@@ -139,10 +138,10 @@ export function handlePreToolUse(inputRaw: string): string {
       }
     }
   } catch (err) {
-    logger.error("Error in PreToolUse hook handler", { error: String(err) });
+    logger.error('Error in PreToolUse hook handler', { error: String(err) });
   }
 
-  return JSON.stringify({ decision: "allow" });
+  return JSON.stringify({ decision: 'allow' });
 }
 
 export function handleStop(inputRaw: string): string {
@@ -150,14 +149,14 @@ export function handleStop(inputRaw: string): string {
     const payload = safeParseJson<StopPayload>(inputRaw);
     if (payload !== null) {
       const projectFolder = extractProjectFolder(payload);
-      logger.info("Session terminating in Stop hook, force-flushing heartbeats", { projectFolder });
+      logger.info('Session terminating in Stop hook, force-flushing heartbeats', { projectFolder });
       flushPendingHeartbeats(projectFolder, true);
     }
   } catch (err) {
-    logger.error("Error in Stop hook handler", { error: String(err) });
+    logger.error('Error in Stop hook handler', { error: String(err) });
   }
 
-  return "{}";
+  return '{}';
 }
 
 export function handlePostToolUse(inputRaw: string): string {
@@ -171,19 +170,19 @@ export function handlePostToolUse(inputRaw: string): string {
       }
     }
   } catch (err) {
-    logger.error("Error in PostToolUse hook handler", { error: String(err) });
+    logger.error('Error in PostToolUse hook handler', { error: String(err) });
   }
 
-  return "{}";
+  return '{}';
 }
 
 function parseHookArg(): string {
   const args = process.argv.slice(2);
-  const hookIdx = args.indexOf("--hook");
+  const hookIdx = args.indexOf('--hook');
   if (hookIdx !== -1 && hookIdx + 1 < args.length) {
     return args[hookIdx + 1];
   }
-  return "PreToolUse";
+  return 'PreToolUse';
 }
 
 export async function main(): Promise<void> {
@@ -196,10 +195,13 @@ export async function main(): Promise<void> {
 }
 
 // Run CLI when invoked directly
-if (process.env.NODE_ENV !== "test" && (process.argv[1]?.endsWith("index.js") || process.argv[1]?.endsWith("index.ts"))) {
+if (
+  process.env.NODE_ENV !== 'test' &&
+  (process.argv[1]?.endsWith('index.js') || process.argv[1]?.endsWith('index.ts'))
+) {
   main().catch((err) => {
-    logger.error("Unhandled error in main", { error: String(err) });
-    process.stdout.write(JSON.stringify({ decision: "allow" }));
+    logger.error('Unhandled error in main', { error: String(err) });
+    process.stdout.write(JSON.stringify({ decision: 'allow' }));
     process.exit(0);
   });
 }

@@ -1,11 +1,11 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
-import * as crypto from "node:crypto";
-import { logger } from "./logger.js";
-import type { ProjectState, HeartbeatPayload } from "./types.js";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
+import * as crypto from 'node:crypto';
+import { logger } from './logger.js';
+import type { ProjectState, HeartbeatPayload } from './types.js';
 
-const DEFAULT_STATE_DIR = path.join(os.homedir(), ".chronova-antigravity-plugin", "state");
+const DEFAULT_STATE_DIR = path.join(os.homedir(), '.chronova-antigravity-plugin', 'state');
 export const RATE_LIMIT_SECONDS = 60;
 
 export function getStateDir(): string {
@@ -13,18 +13,19 @@ export function getStateDir(): string {
 }
 
 export function projectStateFile(projectFolder: string): string {
-  const hash = crypto.createHash("sha256").update(projectFolder).digest("hex").slice(0, 16);
+  const hash = crypto.createHash('sha256').update(projectFolder).digest('hex').slice(0, 16);
   return path.join(getStateDir(), `${hash}.json`);
 }
 
 export function readProjectState(projectFolder: string): ProjectState | null {
   const filePath = projectStateFile(projectFolder);
   try {
-    const raw = fs.readFileSync(filePath, "utf-8");
+    const raw = fs.readFileSync(filePath, 'utf-8');
     const data = JSON.parse(raw) as Partial<ProjectState>;
     return {
-      lastHeartbeatAt: typeof data.lastHeartbeatAt === "number" ? data.lastHeartbeatAt : 0,
-      pendingChanges: data.pendingChanges && typeof data.pendingChanges === "object" ? data.pendingChanges : {},
+      lastHeartbeatAt: typeof data.lastHeartbeatAt === 'number' ? data.lastHeartbeatAt : 0,
+      pendingChanges:
+        data.pendingChanges && typeof data.pendingChanges === 'object' ? data.pendingChanges : {},
     };
   } catch {
     return null;
@@ -38,7 +39,7 @@ export function writeProjectState(projectFolder: string, state: ProjectState): v
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
   } catch (err) {
-    logger.error("Failed to write project state file", { filePath, error: String(err) });
+    logger.error('Failed to write project state file', { filePath, error: String(err) });
   }
 }
 
@@ -61,7 +62,7 @@ export function updateLastHeartbeat(projectFolder: string): void {
     pendingChanges: existing?.pendingChanges ?? {},
   };
   writeProjectState(projectFolder, state);
-  logger.debug("Updated heartbeat state", { projectFolder, lastHeartbeatAt: now });
+  logger.debug('Updated heartbeat state', { projectFolder, lastHeartbeatAt: now });
 }
 
 export function queuePendingChange(projectFolder: string, entity: string, isWrite: boolean): void {
@@ -77,7 +78,11 @@ export function queuePendingChange(projectFolder: string, entity: string, isWrit
   };
 
   writeProjectState(projectFolder, state);
-  logger.debug("Queued pending change", { projectFolder, entity, isWrite: state.pendingChanges[entity].isWrite });
+  logger.debug('Queued pending change', {
+    projectFolder,
+    entity,
+    isWrite: state.pendingChanges[entity].isWrite,
+  });
 }
 
 export function getPendingHeartbeats(projectFolder: string): HeartbeatPayload[] {
@@ -101,5 +106,5 @@ export function clearPendingChanges(projectFolder: string): void {
 
   state.pendingChanges = {};
   writeProjectState(projectFolder, state);
-  logger.debug("Cleared pending changes", { projectFolder });
+  logger.debug('Cleared pending changes', { projectFolder });
 }

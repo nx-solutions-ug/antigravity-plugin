@@ -68,9 +68,7 @@ Or declare it in your `.agents/plugins.json`:
 
 ```json
 {
-  "entries": [
-    { "path": "node_modules/@chronova/antigravity-plugin" }
-  ]
+  "entries": [{ "path": "node_modules/@chronova/antigravity-plugin" }]
 }
 ```
 

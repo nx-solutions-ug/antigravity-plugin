@@ -41,6 +41,7 @@ gh pr-review review view --reviewer chronova-agent --unresolved --not_outdated -
 ```
 
 Then compare each unresolved thread's `path` + `line` against the current diff (Step 3):
+
 - If ALL unresolved threads are now resolved or the code at those lines has changed to address the findings, print `Skipped PR #$ARGUMENTS: review already posted and all findings addressed.` and stop.
 - If some threads are still unresolved and the code hasn't changed, do NOT stop — proceed with the review. Step 6.4 will ensure you only post NEW findings not already raised in an unresolved thread. This allows the bot to re-review when the author pushes new changes that introduce new issues, while avoiding duplicate comments on unchanged lines.
 
@@ -107,6 +108,7 @@ Developers or PR authors often reply explaining intentional design decisions, ar
 ## Step 2.6: Auto-Resolve Fixed or Justified Issues
 
 For each unresolved review thread (comments with `is_resolved: false`) check whether:
+
 1. **Resolved by code change**: Code was modified, removed, or refactored so the reported issue no longer exists, OR the comment has `is_outdated: true`.
 2. **Resolved by valid justification**: The author or reviewer provided a sound, validated explanation in thread comments (evaluated in Step 2.5) demonstrating that the implementation is intentional and correct.
 
@@ -175,15 +177,17 @@ If found, include a line at the bottom of the summary comment:
 ```markdown
 ## Dependency Update Summary
 
-| Package | Change | Type | Recommendation |
-|---------|--------|------|----------------|
+| Package  | Change        | Type                  | Recommendation                  |
+| -------- | ------------- | --------------------- | ------------------------------- |
 | pkg-name | 1.2.3 → 1.2.4 | patch / minor / major | SAFE / REVIEW / ACTION REQUIRED |
 
 ### Notes
+
 - [Per-package notes on breaking changes, security fixes, deprecations, peer deps, or usage in src]
 ```
 
 Assign recommendation per package:
+
 - **SAFE**: Patch or minor update with no breaking changes and no usage of changed APIs in `src/`.
 - **REVIEW**: Minor update with deprecations, or changed APIs are used in `src/` but no known breakage.
 - **ACTION REQUIRED**: Major version with breaking changes, or a security vulnerability.
@@ -229,16 +233,19 @@ Each diff hunk looks like:
 ### 6.2 Compute the line number for a finding
 
 For a finding on an **added or context line** (RIGHT side):
+
 - `--side RIGHT` (this is the default if omitted, but pass it explicitly for clarity)
 - `--line`: the line number in the new (post-change) file. Compute it by counting from `NEW_START` in the hunk header: the first line after the `@@` header is `NEW_START`, the next is `NEW_START + 1`, etc. Context lines and `+` lines both count; `-` lines do NOT count toward the RIGHT side.
 
 For a finding on a **removed line** (LEFT side):
+
 - `--side LEFT`
 - `--line`: the line number in the old (pre-change) file. Compute it by counting from `OLD_START` in the hunk header: the first line after the `@@` header is `OLD_START`, the next is `OLD_START + 1`, etc. Context lines and `-` lines both count; `+` lines do NOT count toward the LEFT side.
 
 ### 6.3 Multi-line range comments
 
 To comment on a range of lines (e.g. a multi-line block), set:
+
 - `--start-line`: the first line of the range.
 - `--start-side`: same as `--side`.
 - `--line`: the last line of the range.
@@ -263,6 +270,7 @@ Some findings are general (e.g. "missing tests", "architecture concern", "naming
 ## Step 7: Common checks (all review types)
 
 Repo-specific standards (backed by `AGENTS.md`):
+
 - **ESM `.js` imports**: All relative imports use the explicit `.js` extension (bundler resolution, `"type": "module"`); Node builtins via `node:` prefix.
 - **Named exports only**: No default exports anywhere.
 - **Fail-soft error handling**: Every hook handler wraps work in try/catch and returns a benign `{"decision":"allow"}` / `{}`; errors are logged, never rethrown; no empty catch blocks without logging.
@@ -325,8 +333,9 @@ return user;
 ````
 
 Comment body conventions:
+
 - Start each inline `--body` with a severity tag: `[P0]` critical, `[P1]` high-impact bug/security, `[P2]` moderate defect, `[P3]` low-risk nit. Then state the issue concisely and what to change.
-- **Include a `suggestion` block whenever you can propose a concrete code fix.** GitHub renders `` ```suggestion `` fenced blocks inside inline review comments as apply-able "Commit suggestion" buttons. This is the primary mechanism for code suggestions — the PR author can apply the fix with one click. Format:
+- **Include a `suggestion` block whenever you can propose a concrete code fix.** GitHub renders ` ```suggestion ` fenced blocks inside inline review comments as apply-able "Commit suggestion" buttons. This is the primary mechanism for code suggestions — the PR author can apply the fix with one click. Format:
 
   ````
   **[P2]** The variable name `usr` is unclear.
@@ -339,6 +348,7 @@ Comment body conventions:
   The suggestion block content MUST be valid replacement code for the commented line(s). For multi-line ranges (when using `--start-line`), the suggestion MUST cover the entire range from `start_line` to `line`. Do NOT include diff markers (`+`/`-`) in the suggestion — only the replacement code.
 
   Only omit the `suggestion` block when the finding is purely observational (e.g. "this function is too complex, consider refactoring") and no concrete replacement can be proposed. In that case, describe the issue and the recommended approach in prose.
+
 - Every `--path` + `--line` MUST exist in the PR diff (Step 3). If `--add-comment` fails with an error, the most likely cause is a wrong `--path`/`--line`. Re-read the diff for that file, recompute the correct line number per Step 6, and retry once. If it still fails, skip that comment and continue with the rest — do not lose the entire review over one bad line.
 
 If there are no line-specific findings, skip this step — a body-only review is valid (submit with `--event COMMENT` or `--event APPROVE` and no inline comments).
@@ -361,6 +371,7 @@ gh pr-review review --submit \
 ```
 
 Event types:
+
 - `APPROVE`: clean review, no blocking issues. `--body` is optional.
 - `REQUEST_CHANGES`: bugs, security issues, type safety violations. `--body` is required.
 - `COMMENT`: non-blocking observations, suggestions. `--body` is required.

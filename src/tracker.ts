@@ -1,15 +1,15 @@
-import * as path from "node:path";
-import * as os from "node:os";
-import { logger } from "./logger.js";
-import type { ToolCall, PreToolUsePayload, PostToolUsePayload, StopPayload } from "./types.js";
+import * as path from 'node:path';
+import * as os from 'node:os';
+import { logger } from './logger.js';
+import type { ToolCall, PreToolUsePayload, PostToolUsePayload, StopPayload } from './types.js';
 
 /**
  * Expand a leading ~ to the user's home directory.
  * Node's path module does not expand ~ by default.
  */
 export function expandTilde(filePath: string): string {
-  if (filePath === "~") return os.homedir();
-  if (filePath.startsWith("~/")) return path.join(os.homedir(), filePath.slice(2));
+  if (filePath === '~') return os.homedir();
+  if (filePath.startsWith('~/')) return path.join(os.homedir(), filePath.slice(2));
   return filePath;
 }
 
@@ -22,7 +22,7 @@ export function expandTilde(filePath: string): string {
  * - "src/index.ts#L50-L60" -> "src/index.ts"
  */
 export function stripLineSelector(filePath: string): string {
-  let cleaned = filePath.replace(/#L\d+(?:-L\d+)?$/i, "");
+  let cleaned = filePath.replace(/#L\d+(?:-L\d+)?$/i, '');
   const match = cleaned.match(/^(.+):(\d+)(?:[-+]\d+)?$/);
   if (match) {
     cleaned = match[1];
@@ -36,13 +36,13 @@ export function stripLineSelector(filePath: string): string {
  * and rejects non-file URI schemes (artifact://, memory://, ssh://, http://, etc.).
  */
 export function resolvePath(baseFolder: string, rawPath: string | undefined): string | null {
-  if (!rawPath || typeof rawPath !== "string") return null;
+  if (!rawPath || typeof rawPath !== 'string') return null;
 
   let sanitized = rawPath.trim();
   if (!sanitized) return null;
 
   // Handle file:// URI scheme
-  if (sanitized.toLowerCase().startsWith("file://")) {
+  if (sanitized.toLowerCase().startsWith('file://')) {
     sanitized = sanitized.slice(7);
     try {
       sanitized = decodeURIComponent(sanitized);
@@ -51,7 +51,7 @@ export function resolvePath(baseFolder: string, rawPath: string | undefined): st
     }
   } else if (/^[a-z][a-z0-9+.-]*:\/\//i.test(sanitized)) {
     // Reject other URI schemes — they are not real filesystem files
-    logger.debug("Skipping non-file URI scheme", { path: rawPath });
+    logger.debug('Skipping non-file URI scheme', { path: rawPath });
     return null;
   }
 
@@ -68,15 +68,20 @@ export function resolvePath(baseFolder: string, rawPath: string | undefined): st
 /**
  * Determine the project workspace folder from a hook payload.
  */
-export function extractProjectFolder(payload: PreToolUsePayload | PostToolUsePayload | StopPayload): string {
+export function extractProjectFolder(
+  payload: PreToolUsePayload | PostToolUsePayload | StopPayload,
+): string {
   if (payload.workspacePaths && payload.workspacePaths.length > 0 && payload.workspacePaths[0]) {
     const ws = expandTilde(payload.workspacePaths[0]);
     return path.isAbsolute(ws) ? path.normalize(ws) : path.resolve(process.cwd(), ws);
   }
 
   const prePayload = payload as PreToolUsePayload;
-  const toolCall = prePayload.toolCall || prePayload.preToolHookArgs?.toolCall || prePayload.toolHookArgs?.toolCall;
-  if (toolCall?.args?.Cwd && typeof toolCall.args.Cwd === "string") {
+  const toolCall =
+    prePayload.toolCall ||
+    prePayload.preToolHookArgs?.toolCall ||
+    prePayload.toolHookArgs?.toolCall;
+  if (toolCall?.args?.Cwd && typeof toolCall.args.Cwd === 'string') {
     const cwd = expandTilde(toolCall.args.Cwd);
     return path.isAbsolute(cwd) ? path.normalize(cwd) : path.resolve(process.cwd(), cwd);
   }
@@ -88,27 +93,30 @@ export function extractProjectFolder(payload: PreToolUsePayload | PostToolUsePay
  * Extract active ToolCall from various payload structures.
  */
 export function extractToolCall(payload: PreToolUsePayload): ToolCall | null {
-  if (payload.toolCall && typeof payload.toolCall.name === "string") {
+  if (payload.toolCall && typeof payload.toolCall.name === 'string') {
     return payload.toolCall;
   }
 
-  if (payload.preToolHookArgs?.toolCall && typeof payload.preToolHookArgs.toolCall.name === "string") {
+  if (
+    payload.preToolHookArgs?.toolCall &&
+    typeof payload.preToolHookArgs.toolCall.name === 'string'
+  ) {
     return payload.preToolHookArgs.toolCall;
   }
 
-  if (payload.toolHookArgs?.toolCall && typeof payload.toolHookArgs.toolCall.name === "string") {
+  if (payload.toolHookArgs?.toolCall && typeof payload.toolHookArgs.toolCall.name === 'string') {
     return payload.toolHookArgs.toolCall;
   }
 
-  if (typeof payload.tool_name === "string") {
+  if (typeof payload.tool_name === 'string') {
     let args: Record<string, unknown> = {};
-    if (typeof payload.tool_input === "string") {
+    if (typeof payload.tool_input === 'string') {
       try {
         args = JSON.parse(payload.tool_input) as Record<string, unknown>;
       } catch {
         args = {};
       }
-    } else if (payload.tool_input && typeof payload.tool_input === "object") {
+    } else if (payload.tool_input && typeof payload.tool_input === 'object') {
       args = payload.tool_input as Record<string, unknown>;
     }
     return { name: payload.tool_name, args };
@@ -177,25 +185,31 @@ export function parseToolCall(
 
   // 1. Antigravity core tools
   if (
-    toolName === "view_file" ||
-    toolName === "write_to_file" ||
-    toolName === "replace_file_content" ||
-    toolName === "multi_replace_file_content"
+    toolName === 'view_file' ||
+    toolName === 'write_to_file' ||
+    toolName === 'replace_file_content' ||
+    toolName === 'multi_replace_file_content'
   ) {
-    rawPath = (args.AbsolutePath || args.TargetFile || args.filePath || args.path) as string | undefined;
-    isWrite = toolName !== "view_file";
-  } else if (toolName === "read_resource") {
+    rawPath = (args.AbsolutePath || args.TargetFile || args.filePath || args.path) as
+      | string
+      | undefined;
+    isWrite = toolName !== 'view_file';
+  } else if (toolName === 'read_resource') {
     rawPath = (args.Uri || args.uri || args.path) as string | undefined;
     isWrite = false;
-  } else if (toolName === "call_mcp_tool") {
+  } else if (toolName === 'call_mcp_tool') {
     const mcpArgs = (args.Arguments || {}) as Record<string, unknown>;
-    rawPath = (mcpArgs.AbsolutePath || mcpArgs.TargetFile || mcpArgs.filePath || mcpArgs.file_path || mcpArgs.path || mcpArgs.targetFile) as string | undefined;
-    const mcpTool = String(args.ToolName || "").toLowerCase();
+    rawPath = (mcpArgs.AbsolutePath ||
+      mcpArgs.TargetFile ||
+      mcpArgs.filePath ||
+      mcpArgs.file_path ||
+      mcpArgs.path ||
+      mcpArgs.targetFile) as string | undefined;
+    const mcpTool = String(args.ToolName || '').toLowerCase();
     isWrite = /(?:write|edit|create|replace|save|update|append|delete|insert)/.test(mcpTool);
   } else {
     // 2. Generic tool argument inspection
-    rawPath = (
-      args.AbsolutePath ||
+    rawPath = (args.AbsolutePath ||
       args.TargetFile ||
       args.filePath ||
       args.file_path ||
@@ -204,13 +218,12 @@ export function parseToolCall(
       args.path ||
       args.file ||
       args.Uri ||
-      args.uri
-    ) as string | undefined;
+      args.uri) as string | undefined;
 
     isWrite = /(?:write|edit|create|replace|save|update|append|delete|insert)/.test(toolName);
   }
 
-  if (!rawPath || typeof rawPath !== "string") {
+  if (!rawPath || typeof rawPath !== 'string') {
     return null;
   }
 
@@ -221,7 +234,7 @@ export function parseToolCall(
 
   // Reject internal system/agent paths (brain, mcp schemas, skills, logs, tmp, .git, node_modules)
   if (isIgnoredPath(resolved)) {
-    logger.debug("Ignoring internal/system path", { path: resolved });
+    logger.debug('Ignoring internal/system path', { path: resolved });
     return null;
   }
 
@@ -230,7 +243,7 @@ export function parseToolCall(
   if (workspacePaths && workspacePaths.length > 0) {
     const matchedWs = findMatchingWorkspace(resolved, workspacePaths);
     if (!matchedWs) {
-      logger.debug("Skipping file outside workspace paths", { path: resolved, workspacePaths });
+      logger.debug('Skipping file outside workspace paths', { path: resolved, workspacePaths });
       return null;
     }
     targetProjectFolder = matchedWs;

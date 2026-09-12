@@ -35,6 +35,7 @@ Antigravity tool call / session stop
 ```
 
 **Key design points:**
+
 - **Stateless per invocation.** Every hook invocation is a fresh `node` process; all state persists to per-project JSON files at `~/.chronova-antigravity-plugin/state/<sha256(folder).slice(0,16)>.json` (`state.ts:15-18`).
 - **Entity-keyed pending queue.** `pendingChanges` is keyed by entity path, so repeated edits to the same file collapse into one heartbeat (`state.ts:67-81`).
 - **Rate limiting.** 1 heartbeat / 60s / project (`RATE_LIMIT_SECONDS`, `state.ts:9`). During cooldown, changes queue on disk. `Stop` force-flushes via `flushPendingHeartbeats(folder, true)` (`index.ts:82-95`).
@@ -54,15 +55,15 @@ Antigravity tool call / session stop
 
 ## Key Directories
 
-| Path | Purpose |
-|------|---------|
-| `src/` | Plugin source — 6 modules (index, tracker, heartbeat, state, logger, types). Compiled to `dist/` via `tsc`. |
-| `tests/` | Vitest unit tests — one `*.test.ts` per source module, colocated here (not in `src/`). |
-| `dist/` | Compiled output (`tsc`, `outDir: dist`). Published artifact. Git-ignored. |
-| `.github/workflows/` | 7 CI workflows (test, release, claude, claude-ci, claude-code-review, claude-fix-issue, auto-manage). |
-| `public/` | Static assets (e.g. README banner). |
-| `plugin.json` | Antigravity plugin manifest (`name` only). |
-| `hooks.json` | Antigravity hook registration — `PreToolUse` (matcher `*`) and `Stop`, both `node dist/index.js --hook <Type>` with 15s timeout. |
+| Path                 | Purpose                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `src/`               | Plugin source — 6 modules (index, tracker, heartbeat, state, logger, types). Compiled to `dist/` via `tsc`.                      |
+| `tests/`             | Vitest unit tests — one `*.test.ts` per source module, colocated here (not in `src/`).                                           |
+| `dist/`              | Compiled output (`tsc`, `outDir: dist`). Published artifact. Git-ignored.                                                        |
+| `.github/workflows/` | 7 CI workflows (test, release, claude, claude-ci, claude-code-review, claude-fix-issue, auto-manage).                            |
+| `public/`            | Static assets (e.g. README banner).                                                                                              |
+| `plugin.json`        | Antigravity plugin manifest (`name` only).                                                                                       |
+| `hooks.json`         | Antigravity hook registration — `PreToolUse` (matcher `*`) and `Stop`, both `node dist/index.js --hook <Type>` with 15s timeout. |
 
 ## Development Commands
 
@@ -95,18 +96,18 @@ CI runs the full gate: `type-check` → `lint` → `test` → `build` (`.github/
 
 ## Important Files
 
-| File | Role |
-|------|------|
-| `src/index.ts` | Entrypoint + hook router. `readStdin`, `handleHook`, `handlePreToolUse`, `handleStop`, `handlePostToolUse`, `main`. |
-| `src/tracker.ts` | Path/tool-call parsing. `parseToolCall`, `resolvePath`, `extractToolCall`, `extractProjectFolder`, `isIgnoredPath`, `findMatchingWorkspace`. |
-| `src/heartbeat.ts` | chronova-cli integration. `getCliPath`, `buildHeartbeatArgs`, `sendHeartbeat` (execFile + unref), `flushPendingHeartbeats`. |
-| `src/state.ts` | Persistent per-project state. `readProjectState`, `writeProjectState`, `shouldSendHeartbeat`, `queuePendingChange`, `getPendingHeartbeats`, `clearPendingChanges`. |
-| `src/logger.ts` | File logger → `~/.chronova-antigravity-plugin/plugin.log`. |
-| `src/types.ts` | Type-only: `ToolCall`, `PreToolUsePayload`, `PostToolUsePayload`, `StopPayload`, `HeartbeatPayload`, `ProjectState`. |
-| `hooks.json` | Antigravity hook registration (`PreToolUse` matcher `*`, `Stop`). |
-| `plugin.json` | Antigravity plugin manifest. |
-| `package.json` | Manifest, scripts, `packageManager: bun@1.3.14`, `engines: node>=20`. |
-| `.releaserc.json` | semantic-release config (main/beta/alpha branches, npm + git + github plugins). |
+| File               | Role                                                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`     | Entrypoint + hook router. `readStdin`, `handleHook`, `handlePreToolUse`, `handleStop`, `handlePostToolUse`, `main`.                                                |
+| `src/tracker.ts`   | Path/tool-call parsing. `parseToolCall`, `resolvePath`, `extractToolCall`, `extractProjectFolder`, `isIgnoredPath`, `findMatchingWorkspace`.                       |
+| `src/heartbeat.ts` | chronova-cli integration. `getCliPath`, `buildHeartbeatArgs`, `sendHeartbeat` (execFile + unref), `flushPendingHeartbeats`.                                        |
+| `src/state.ts`     | Persistent per-project state. `readProjectState`, `writeProjectState`, `shouldSendHeartbeat`, `queuePendingChange`, `getPendingHeartbeats`, `clearPendingChanges`. |
+| `src/logger.ts`    | File logger → `~/.chronova-antigravity-plugin/plugin.log`.                                                                                                         |
+| `src/types.ts`     | Type-only: `ToolCall`, `PreToolUsePayload`, `PostToolUsePayload`, `StopPayload`, `HeartbeatPayload`, `ProjectState`.                                               |
+| `hooks.json`       | Antigravity hook registration (`PreToolUse` matcher `*`, `Stop`).                                                                                                  |
+| `plugin.json`      | Antigravity plugin manifest.                                                                                                                                       |
+| `package.json`     | Manifest, scripts, `packageManager: bun@1.3.14`, `engines: node>=20`.                                                                                              |
+| `.releaserc.json`  | semantic-release config (main/beta/alpha branches, npm + git + github plugins).                                                                                    |
 
 ## Runtime/Tooling Preferences
 
@@ -119,14 +120,14 @@ CI runs the full gate: `type-check` → `lint` → `test` → `build` (`.github/
 
 ## Environment Variables
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `CHRONOVA_CLI_PATH` | `~/.local/bin/chronova-cli` (or PATH) | Path to `chronova-cli` binary. Set to `"true"` in tests to stub with no-op binary. |
-| `CHRONOVA_STATE_DIR` | `~/.chronova-antigravity-plugin/state` | Per-project state directory. Set to `os.tmpdir()` path in tests. |
-| `CHRONOVA_ANTIGRAVITY_DEBUG` | — | Enable debug logging (any truthy value). |
-| `CHRONOVA_PI_DEBUG` | — | Enable debug logging (any truthy value). |
-| `CHRONOVA_DEBUG` | — | Enable debug logging (any truthy value). |
-| `~/.chronova.cfg` `debug=true` | — | Enable debug logging via config file. |
+| Variable                       | Default                                | Purpose                                                                            |
+| ------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------- |
+| `CHRONOVA_CLI_PATH`            | `~/.local/bin/chronova-cli` (or PATH)  | Path to `chronova-cli` binary. Set to `"true"` in tests to stub with no-op binary. |
+| `CHRONOVA_STATE_DIR`           | `~/.chronova-antigravity-plugin/state` | Per-project state directory. Set to `os.tmpdir()` path in tests.                   |
+| `CHRONOVA_ANTIGRAVITY_DEBUG`   | —                                      | Enable debug logging (any truthy value).                                           |
+| `CHRONOVA_PI_DEBUG`            | —                                      | Enable debug logging (any truthy value).                                           |
+| `CHRONOVA_DEBUG`               | —                                      | Enable debug logging (any truthy value).                                           |
+| `~/.chronova.cfg` `debug=true` | —                                      | Enable debug logging via config file.                                              |
 
 Log file: `~/.chronova-antigravity-plugin/plugin.log`.
 
@@ -146,15 +147,15 @@ Log file: `~/.chronova-antigravity-plugin/plugin.log`.
 
 ## CI/CD
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `test.yml` | push (main/develop/feat/\*/fix/\*), PR | type-check → lint → test → build |
-| `release.yml` | push to main | test gate → semantic-release (npm + git + github); then `gh release edit` to replace notes with full commit list |
-| `claude.yml` | issue_comment, pull_request_review_comment | `/claude` or `@claude` comment → runs Claude Code (model `claude-sonnet-5`) |
-| `claude-ci.yml` | issues/PRs events, manual dispatch | triage-issue, label-pr |
-| `claude-code-review.yml` | PR opened/synchronize/ready_for_review/review_requested, review comments, manual dispatch | dependency-review (renovate/dependabot PRs), code-review (via `gh-pr-review` extension) |
-| `claude-fix-issue.yml` | repository_dispatch (issue-triaged), workflow_dispatch | Claude fixes a triaged issue |
-| `auto-manage.yml` | issues/PRs opened/reopened | `needs-triage` label + auto-assign to `niklasschaeffer` |
+| Workflow                 | Trigger                                                                                   | Purpose                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `test.yml`               | push (main/develop/feat/\*/fix/\*), PR                                                    | type-check → lint → test → build                                                                                 |
+| `release.yml`            | push to main                                                                              | test gate → semantic-release (npm + git + github); then `gh release edit` to replace notes with full commit list |
+| `claude.yml`             | issue_comment, pull_request_review_comment                                                | `/claude` or `@claude` comment → runs Claude Code (model `claude-sonnet-5`)                                      |
+| `claude-ci.yml`          | issues/PRs events, manual dispatch                                                        | triage-issue, label-pr                                                                                           |
+| `claude-code-review.yml` | PR opened/synchronize/ready_for_review/review_requested, review comments, manual dispatch | dependency-review (renovate/dependabot PRs), code-review (via `gh-pr-review` extension)                          |
+| `claude-fix-issue.yml`   | repository_dispatch (issue-triaged), workflow_dispatch                                    | Claude fixes a triaged issue                                                                                     |
+| `auto-manage.yml`        | issues/PRs opened/reopened                                                                | `needs-triage` label + auto-assign to `niklasschaeffer`                                                          |
 
 All OMP agent workflows authenticate via a GitHub App token + `OLLAMA_API_KEY` and use model `ollama-cloud/glm-5.3-flash:max`.
 
