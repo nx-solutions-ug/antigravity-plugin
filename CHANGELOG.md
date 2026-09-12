@@ -1,3 +1,10 @@
+## [1.0.7](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.6...v1.0.7) (2026-09-12)
+
+
+### Bug Fixes
+
+* do not fail pack/publish when husky is unavailable ([434a789](https://github.com/nx-solutions-ug/antigravity-plugin/commit/434a7890ae183692a20bdcbf27f982fb127348e6))
+
 ## [1.0.6](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.5...v1.0.6) (2026-09-12)
 
 
