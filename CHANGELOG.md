@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.5...v1.0.6) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** quote command descriptions containing a colon ([a44e12c](https://github.com/nx-solutions-ug/antigravity-plugin/commit/a44e12c5c26a0b39be254bba37f268f135b1ccc3))
+
 ## [1.0.5](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.4...v1.0.5) (2026-09-12)
 
 
