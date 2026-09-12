@@ -1,9 +1,28 @@
 {
   "name": "@chronova/antigravity-plugin",
   "version": "1.0.6",
+  "private": false,
   "description": "Chronova heartbeat tracking plugin for Antigravity — sends coding activity to your Chronova dashboard via chronova-cli",
-  "type": "module",
-  "main": "dist/index.js",
+  "keywords": [
+    "ai-coding",
+    "antigravity",
+    "chronova",
+    "coding-analytics",
+    "developer-analytics",
+    "gemini",
+    "heartbeat",
+    "wakatime"
+  ],
+  "homepage": "https://github.com/nx-solutions-ug/antigravity-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/nx-solutions-ug/antigravity-plugin/issues"
+  },
+  "license": "MIT",
+  "author": "nx-solutions-ug",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nx-solutions-ug/antigravity-plugin.git"
+  },
   "files": [
     "dist",
     "plugin.json",
@@ -11,48 +30,28 @@
     "README.md",
     "LICENSE"
   ],
-  "engines": {
-    "node": ">=20.0.0"
+  "type": "module",
+  "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
   },
-  "packageManager": "bun@1.4.2",
-  "author": "nx-solutions-ug",
-  "private": false,
   "scripts": {
     "build": "tsc",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "prebuild": "bun run clean",
     "prepublishOnly": "bun run build",
     "type-check": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "oxlint --react-plugin --vitest-plugin --import-plugin",
     "test": "vitest run",
     "test:watch": "vitest",
     "pack": "bun pm pack",
-    "semantic-release": "semantic-release"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "chronova",
-    "antigravity",
-    "gemini",
-    "wakatime",
-    "heartbeat",
-    "coding-analytics",
-    "developer-analytics",
-    "ai-coding"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nx-solutions-ug/antigravity-plugin.git"
-  },
-  "homepage": "https://github.com/nx-solutions-ug/antigravity-plugin#readme",
-  "bugs": {
-    "url": "https://github.com/nx-solutions-ug/antigravity-plugin/issues"
+    "semantic-release": "semantic-release",
+    "lint:fix": "oxlint --react-plugin --vitest-plugin --import-plugin --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.0",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^11.0.0",
@@ -60,10 +59,15 @@
     "@semantic-release/npm": "^13.0.0",
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@types/node": "^26.0.0",
-    "eslint": "^10.0.0",
+    "husky": "^9.1.7",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
     "semantic-release": "^25.0.0",
     "typescript": "^6.0.0",
-    "typescript-eslint": "^8.61.1",
     "vitest": "^5.0.0"
-  }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "bun@1.4.2"
 }
