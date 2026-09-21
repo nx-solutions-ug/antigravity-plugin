@@ -208,6 +208,47 @@ Dependency PRs do NOT use the inline-review submission in Step 7. Stop after pos
 3. Deduplicate against existing unresolved review threads (see Step 6.4).
 4. Submit the review per Step 7 — `REQUEST_CHANGES` for bugs/security/type safety, `APPROVE` for clean changes or minor nits only.
 
+## Step 5.5: Run the gates
+
+The workflow installs the toolchain before handing the PR over, so the checks
+this diff has to pass are runnable here. Do not report a finding you could have
+confirmed or refuted by running them.
+
+```bash
+echo "TOOLCHAIN_READY=${TOOLCHAIN_READY:-false}"
+```
+
+If `TOOLCHAIN_READY` is `false`, the dependency install failed. Skip this step,
+review from the diff alone, and say so in one sentence in the review body — a
+lockfile that will not install is itself worth mentioning.
+
+Otherwise:
+
+```bash
+bun run type-check
+bun run format:check
+# Lint only what this PR touched: the repository carries pre-existing warnings.
+# Each Bash call is its own shell, so re-derive BASE here.
+BASE="origin/${BASE_REF:-main}"
+CHANGED=$(git diff --name-only --diff-filter=d "$BASE"...HEAD -- '*.ts' '*.tsx')
+[ -n "$CHANGED" ] && bun run lint $CHANGED
+```
+
+How to read the output:
+
+- **Type errors**: blocking. If the failing file is not in this PR's diff, it is
+  pre-existing — note it in the review body rather than as a finding on a line
+  nobody here wrote.
+- **Lint warnings on changed lines**: report them. Warnings do not fail the Lint
+  gate, so a new one reaches `main` unless a reviewer names it. Report the rule
+  and what it flags, not a style opinion.
+- **`format:check` failures**: one line in the review body naming the files. Do
+  not post per-line formatting comments.
+
+State in the review body which of these you actually ran. A review that claims
+verification it did not perform is worse than one that admits reading only the
+diff.
+
 ## Step 6: Mapping findings to diff lines
 
 GitHub inline review comments MUST reference a line that exists in the PR diff. A comment that points at a line not in the diff will be rejected with an error. Follow these rules exactly.
