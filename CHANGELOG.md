@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.7...v1.0.8) (2026-10-10)
+
+
+### Bug Fixes
+
+* **ci:** stop double 👀 reaction on [@claude](https://github.com/claude) comments ([#39](https://github.com/nx-solutions-ug/antigravity-plugin/issues/39)) ([f54bda0](https://github.com/nx-solutions-ug/antigravity-plugin/commit/f54bda00157426076f52fe855ffe7e7fe91b50dd))
+
 ## [1.0.7](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.6...v1.0.7) (2026-09-12)
 
 
