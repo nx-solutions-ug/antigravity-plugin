@@ -1,3 +1,10 @@
+## [1.0.9](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.8...v1.0.9) (2026-10-12)
+
+
+### Bug Fixes
+
+* **ci:** run the Claude agent as chronova-agent[bot] and allow it in dependency review ([#40](https://github.com/nx-solutions-ug/antigravity-plugin/issues/40)) ([0033ef9](https://github.com/nx-solutions-ug/antigravity-plugin/commit/0033ef9afc8cc25ee7128867bbdd65fd86ecbb30))
+
 ## [1.0.8](https://github.com/nx-solutions-ug/antigravity-plugin/compare/v1.0.7...v1.0.8) (2026-10-10)
 
 
